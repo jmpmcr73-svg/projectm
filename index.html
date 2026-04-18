@@ -445,24 +445,63 @@ var SIM_STK=[
 ];
 
 // ══ AUTH ══
-document.getElementById('btn-login').addEventListener('click',doLogin);
-document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('pg-login').style.display!=='none')doLogin();});
+// ══ AUTH ══
 function doLogin(){
-  var u=v('l-u').trim(),p=v('l-p').trim(),rol=v('l-rol');
-  var ok=(u==='admin@iagri.app'&&p==='iAGRI2026!')||(u==='admin@agrosense.co'&&p==='agro2026');
-  if(!ok){document.getElementById('l-err').style.display='block';return;}
-  var icons={superadmin:'🧠',pm:'📋',client:'💼',tecnico:'🔧',auditor:'🔍'};
-  var names={superadmin:'SuperAdmin (Akasha)',pm:'Project Manager',client:'Client Owner',tecnico:'Field Operative',auditor:'Auditor Externo'};
-  me={email:u,rol:rol,nombre:names[rol]||'Usuario'};
-  document.getElementById('sb-icon').textContent=icons[rol]||'👤';
-  document.getElementById('sb-name').textContent=me.nombre;
-  document.getElementById('sb-rol-tag').textContent=rol.toUpperCase();
-  document.getElementById('topbar-rol-badge').textContent=me.nombre.split('(')[0].trim();
-  document.getElementById('pg-login').style.display='none';
-  document.getElementById('pg-app').style.display='block';
-  initApp();
+  try{
+    var u=v('l-u').trim(), p=v('l-p').trim(), rol=v('l-rol');
+    var err=document.getElementById('l-err');
+    var ok=(u==='admin@iagri.app'&&p==='iAGRI2026!')||(u==='admin@agrosense.co'&&p==='agro2026');
+    if(!ok){ if(err)err.style.display='block'; return; }
+    if(err)err.style.display='none';
+    var icons={superadmin:'🧠',pm:'📋',client:'💼',tecnico:'🔧',auditor:'🔍'};
+    var names={superadmin:'SuperAdmin (Akasha)',pm:'Project Manager',client:'Client Owner',tecnico:'Field Operative',auditor:'Auditor Externo'};
+    me={email:u,rol:rol,nombre:names[rol]||'Usuario'};
+    var sbIcon=document.getElementById('sb-icon');
+    var sbName=document.getElementById('sb-name');
+    var sbRol=document.getElementById('sb-rol-tag');
+    var tbBadge=document.getElementById('topbar-rol-badge');
+    if(sbIcon)sbIcon.textContent=icons[rol]||'👤';
+    if(sbName)sbName.textContent=me.nombre;
+    if(sbRol)sbRol.textContent=rol.toUpperCase();
+    if(tbBadge)tbBadge.textContent=me.nombre.split('(')[0].trim();
+    var login=document.getElementById('pg-login');
+    var app=document.getElementById('pg-app');
+    if(login)login.style.display='none';
+    if(app)app.style.display='block';
+    // Load data then render dashboard
+    initApp();
+  }catch(e){
+    console.error('Login error:',e);
+    // Force show app even on error
+    var login=document.getElementById('pg-login');
+    var app=document.getElementById('pg-app');
+    if(login)login.style.display='none';
+    if(app){app.style.display='block';}
+    PROJECTS=SIM_PROJ;HITOS=SIM_HITOS;TAREAS=SIM_TAREAS;
+    RIESGOS=SIM_RIESGOS;PRESUP=SIM_PRESUP;AUDIT=SIM_AUDIT;STK=SIM_STK;
+    ACTIVE_PROJ=PROJECTS[0];
+    populateProjSelector();
+    go('dash');
+  }
 }
-function doLogout(){me=null;document.getElementById('pg-app').style.display='none';document.getElementById('pg-login').style.display='flex';}
+function doLogout(){
+  me=null;
+  var app=document.getElementById('pg-app');
+  var login=document.getElementById('pg-login');
+  if(app)app.style.display='none';
+  if(login)login.style.display='flex';
+}
+// Attach login button — wait for DOM
+(function attachLogin(){
+  var btn=document.getElementById('btn-login');
+  if(btn){
+    btn.onclick=doLogin;
+  }
+  document.addEventListener('keydown',function(e){
+    var pg=document.getElementById('pg-login');
+    if(e.key==='Enter'&&pg&&pg.style.display!=='none')doLogin();
+  });
+})();
 setInterval(function(){var e=document.getElementById('clock');if(e)e.textContent=new Date().toLocaleString('es-SV',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit'});},1000);
 
 // ══ NAV ══
@@ -481,23 +520,27 @@ var _t;function toast(msg,c){var e=document.getElementById('toast');e.textConten
 
 // ══ INIT ══
 async function initApp(){
-  var r=await dbQ(function(d){return d.from('pm_proyectos').select('*').order('created_at',{ascending:false});});
-  PROJECTS=(r.data&&r.data.length)?r.data:SIM_PROJ;
-  var rh=await dbQ(function(d){return d.from('pm_hitos').select('*').order('orden');});
-  HITOS=(rh.data&&rh.data.length)?rh.data:SIM_HITOS;
-  var rt=await dbQ(function(d){return d.from('pm_tareas').select('*').order('tarea_id');});
-  TAREAS=(rt.data&&rt.data.length)?rt.data:SIM_TAREAS;
-  var rrr=await dbQ(function(d){return d.from('pm_riesgos').select('*');});
-  RIESGOS=(rrr.data&&rrr.data.length)?rrr.data:SIM_RIESGOS;
-  var rp=await dbQ(function(d){return d.from('pm_presupuesto').select('*');});
-  PRESUP=(rp.data&&rp.data.length)?rp.data:SIM_PRESUP;
-  var ra=await dbQ(function(d){return d.from('pm_auditoria').select('*');});
-  AUDIT=(ra.data&&ra.data.length)?ra.data:SIM_AUDIT;
-  var rs=await dbQ(function(d){return d.from('pm_stakeholders').select('*');});
-  STK=(rs.data&&rs.data.length)?rs.data:SIM_STK;
+  // Always set SIM data FIRST — never block rendering
+  PROJECTS=SIM_PROJ.slice(); HITOS=SIM_HITOS.slice(); TAREAS=SIM_TAREAS.slice();
+  RIESGOS=SIM_RIESGOS.slice(); PRESUP=SIM_PRESUP.slice(); AUDIT=SIM_AUDIT.slice(); STK=SIM_STK.slice();
   ACTIVE_PROJ=PROJECTS[0]||null;
   populateProjSelector();
-  loadDash();
+  go('dash'); // Show dashboard immediately with SIM data
+  // Then load real data from Supabase in background
+  if(db){
+    try{
+      var r=await dbQ(function(d){return d.from('pm_proyectos').select('*').order('created_at',{ascending:false});});
+      if(r&&r.data&&r.data.length){PROJECTS=r.data;ACTIVE_PROJ=r.data[0];populateProjSelector();}
+    }catch(e){console.warn('Supabase pm_proyectos:',e);}
+    try{var rh=await dbQ(function(d){return d.from('pm_hitos').select('*').order('orden');});if(rh&&rh.data&&rh.data.length)HITOS=rh.data;}catch(e){}
+    try{var rt=await dbQ(function(d){return d.from('pm_tareas').select('*').order('tarea_id');});if(rt&&rt.data&&rt.data.length)TAREAS=rt.data;}catch(e){}
+    try{var rr=await dbQ(function(d){return d.from('pm_riesgos').select('*');});if(rr&&rr.data&&rr.data.length)RIESGOS=rr.data;}catch(e){}
+    try{var rp=await dbQ(function(d){return d.from('pm_presupuesto').select('*');});if(rp&&rp.data&&rp.data.length)PRESUP=rp.data;}catch(e){}
+    try{var ra=await dbQ(function(d){return d.from('pm_auditoria').select('*');});if(ra&&ra.data&&ra.data.length)AUDIT=ra.data;}catch(e){}
+    try{var rs=await dbQ(function(d){return d.from('pm_stakeholders').select('*');});if(rs&&rs.data&&rs.data.length)STK=rs.data;}catch(e){}
+    // Refresh dashboard with real data
+    try{loadDash();}catch(e){}
+  }
 }
 
 function populateProjSelector(){
@@ -507,7 +550,7 @@ function populateProjSelector(){
 function setActiveProjFromSelect(id){ACTIVE_PROJ=PROJECTS.find(function(p){return p.proyecto_id===id;})||null;}
 
 // ══ DASHBOARD ══
-function loadDash(){
+function loadDash(){try{
   var totalBudget=PROJECTS.reduce(function(a,p){return a+p.presupuesto_total;},0);
   var totalGasto=PROJECTS.reduce(function(a,p){return a+p.gasto_real;},0);
   var avgCPI=PROJECTS.reduce(function(a,p){return a+p.cpi;},0)/Math.max(PROJECTS.length,1);
@@ -583,9 +626,8 @@ function loadDash(){
     +'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:7px;"><div style="color:var(--muted);">Presup.</div><div style="color:#e8f0fa;font-weight:700;">$'+fmtM(totalPres)+'</div></div>'
     +'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:7px;"><div style="color:var(--muted);">Ejecutado</div><div style="color:'+bc+';font-weight:700;">$'+fmtM(totalExec)+'</div></div>'
     +'</div></div>';
-}
-
-// ══ PORTFOLIO ══
+}catch(e){console.error('loadDash error:',e);}
+}// ══ PORTFOLIO ══
 function renderPortfolio(){
   var fil=v('port-filter');
   var list=fil?PROJECTS.filter(function(p){return p.sector===fil;}):PROJECTS;
@@ -1052,9 +1094,11 @@ function loadAkasha(){
     +['¿Qué pasa si el costo de materiales sube 15%?','Simular escenario de flete marítimo +20%','Calcular impacto de retraso de 2 meses','Optimizar ruta crítica del Gantt','Análisis de riesgo fitosanitario HAZMAT','¿Cuál es la factibilidad de exportar a Dubái?'].map(function(s){
       return '<button class="btn btn-o" style="text-align:left;font-size:11px;padding:7px 12px;" onclick="document.getElementById(\'chat-input\').value=this.textContent.trim();sendChat()">💬 '+s+'</button>';
     }).join('')+'</div>';
-  document.getElementById('chat-quick-btns').innerHTML=['📊 KPIs','📅 Cronograma','💰 Presupuesto','⚠️ Riesgos','✅ Compliance','🌐 Incoterms'].map(function(q){return '<button class="btn btn-o btn-sm" onclick="document.getElementById(\'chat-input\').value=\'Analiza el/los '+q.replace(/[📊📅💰⚠️✅🌐]/gu,\'\').trim()+' del proyecto activo\';sendChat()">'+q+'</button>';}).join('');
+  var _qT=[['KPIs','KPIs'],['Cronograma','cronograma'],['Presupuesto','presupuesto'],['Riesgos','riesgos'],['Compliance','compliance'],['Incoterms','Incoterms']];
+  document.getElementById('chat-quick-btns').innerHTML=_qT.map(function(t){var btn=document.createElement('button');btn.className='btn btn-o btn-sm';btn.textContent=t[0];btn.onclick=function(){quickChat('Analiza el/los '+t[1]+' del proyecto activo');};return btn.outerHTML;}).join('');
 }
 
+function quickChat(q){document.getElementById('chat-input').value=q;sendChat();}
 async function sendChat(){
   var input=document.getElementById('chat-input');var msg=input.value.trim();if(!msg)return;
   input.value='';
