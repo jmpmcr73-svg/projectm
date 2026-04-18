@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CAIA Lab — Módulo Laboratorio iAGRI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
+.brand{font-family:'Space Grotesk',sans-serif;}
+body{background:#080d14;color:#cbd5e1;}
+:root{--green:#00d44c;--green2:#4ade80;--red:#f87171;--amber:#fbbf24;--blue:#60a5fa;--purple:#c084fc;--hazmat:#ff3333;}
+.sb{width:248px;min-height:100vh;background:linear-gradient(180deg,#040a12,#071420 60%,#0a1a2e);position:fixed;top:0;left:0;z-index:40;display:flex;flex-direction:column;border-right:1px solid rgba(0,212,76,.1);}
+.main{margin-left:248px;min-height:100vh;}
+.topbar{background:rgba(4,10,18,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,212,76,.12);padding:9px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30;}
+.card{background:rgba(255,255,255,.03);border-radius:12px;border:1px solid rgba(255,255,255,.07);padding:16px;}
+.kpi-card{background:rgba(255,255,255,.03);border-radius:11px;border:1px solid rgba(255,255,255,.07);padding:14px;cursor:pointer;transition:.15s;}
+.kpi-card:hover{background:rgba(255,255,255,.06);border-color:rgba(0,212,76,.3);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.badge-ok{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.2);}
+.badge-warn{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2);}
+.badge-crit{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2);}
+.badge-blue{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2);}
+.badge-gray{background:rgba(148,163,184,.08);color:#94a3b8;border:1px solid rgba(148,163,184,.12);}
+.badge-purple{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.2);}
+.badge-hazmat{background:rgba(255,51,51,.2);color:#ff3333;border:1.5px solid rgba(255,51,51,.4);animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 11px;text-align:left;background:rgba(255,255,255,.03);color:#64748b;font-weight:700;font-size:10px;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.05);}
+.tbl td{padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.04);color:#cbd5e1;vertical-align:middle;}
+.tbl tr:hover td{background:rgba(255,255,255,.025);}
+.login-bg{min-height:100vh;background:linear-gradient(145deg,#020810,#051220 40%,#071a2e);display:flex;align-items:center;justify-content:center;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:#0b1929;border-radius:16px;padding:22px;max-width:700px;width:100%;max-height:93vh;overflow-y:auto;border:1px solid rgba(0,212,76,.15);box-shadow:0 24px 64px rgba(0,0,0,.6);}
+.modal-lg{max-width:920px;}
+.nit{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;border-radius:7px;margin:1px 6px;color:rgba(255,255,255,.5);transition:.12s;font-size:12.5px;font-weight:500;}
+.nit:hover{background:rgba(0,212,76,.07);color:#fff;}
+.nit.on{background:linear-gradient(90deg,rgba(0,212,76,.14),rgba(0,212,76,.06));color:#00d44c;border-left:2px solid #00d44c;padding-left:10px;}
+.sh{font-size:10px;color:rgba(255,255,255,.25);padding:11px 12px 3px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;}
+.btn-primary{background:linear-gradient(90deg,#009e38,#00d44c);color:#020d14;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-outline{background:transparent;color:#00d44c;border:1.5px solid rgba(0,212,76,.4);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-danger{background:linear-gradient(90deg,#991b1b,#dc2626);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-hazmat{background:linear-gradient(90deg,#7f1d1d,#ff3333);color:#fff;border:1.5px solid #ff3333;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;animation:pulse 1.5s infinite;}
+.btn-blue{background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-sm{padding:4px 11px;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;border:none;}
+input,select,textarea{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 11px;font-size:12px;width:100%;outline:none;transition:.2s;color:#e2e8f0;font-family:inherit;}
+input:focus,select:focus,textarea:focus{border-color:rgba(0,212,76,.5);background:rgba(0,212,76,.04);}
+select option{background:#0b1929;color:#e2e8f0;}
+label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;}
+.prog-bar{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;}
+/* HAZMAT overlay */
+.hazmat-alert{position:fixed;top:70px;left:0;right:0;z-index:50;background:linear-gradient(90deg,rgba(127,29,29,.95),rgba(220,38,38,.9));padding:10px 22px;display:flex;align-items:center;gap:12px;border-bottom:2px solid #ff3333;}
+/* Result value indicators */
+.val-ok{color:#4ade80;font-weight:700;}
+.val-warn{color:#fbbf24;font-weight:700;}
+.val-crit{color:#f87171;font-weight:700;animation:pulse 1.5s infinite;}
+.val-hazmat{color:#ff3333;font-weight:800;font-size:13px;animation:pulse .8s infinite;}
+/* Firma badges */
+.firma-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:14px;font-size:10px;font-weight:700;}
+/* Trend chart inline */
+.trend-bar{height:32px;display:flex;align-items:flex-end;gap:2px;}
+.trend-col{background:rgba(0,212,76,.3);border-radius:2px 2px 0 0;min-width:8px;}
+/* Panel card */
+.panel-card{border-radius:10px;padding:12px;cursor:pointer;border:1.5px solid rgba(255,255,255,.07);transition:.15s;background:rgba(255,255,255,.025);}
+.panel-card:hover{border-color:rgba(0,212,76,.4);background:rgba(0,212,76,.05);}
+.panel-card.selected{border-color:#00d44c;background:rgba(0,212,76,.08);}
+/* QR code */
+.qr-box{background:#fff;padding:14px;border-radius:10px;display:inline-block;}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="pg-login" class="login-bg">
+  <div style="width:100%;max-width:420px;padding:20px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:60px;margin-bottom:8px;">🔬</div>
+      <div class="brand" style="font-size:26px;font-weight:800;color:#fff;">CAIA Lab</div>
+      <div style="font-size:11px;color:rgba(0,212,76,.65);letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Centro de Análisis iAGRI · ISO 17025</div>
+    </div>
+    <div style="background:rgba(0,0,0,.45);border:1px solid rgba(0,212,76,.2);border-radius:16px;padding:26px;backdrop-filter:blur(20px);">
+      <div style="margin-bottom:11px;"><label>Usuario</label><input id="l-u" type="text" value="admin@iagri.app"></div>
+      <div style="margin-bottom:16px;"><label>Contraseña</label><input id="l-p" type="password" value="iAGRI2026!"></div>
+      <div style="margin-bottom:16px;"><label>Rol de Acceso</label>
+        <select id="l-rol">
+          <option value="director_cientifico">🧬 Director Científico</option>
+          <option value="analista_lab" selected>🔬 Analista de Laboratorio</option>
+          <option value="tecnico_campo">🌿 Técnico de Campo</option>
+          <option value="gerente_agricola">🌾 Gerente Agrícola</option>
+          <option value="propietario">💼 Propietario / Socio</option>
+          <option value="agroindustria">🏭 Agroindustria</option>
+        </select>
+      </div>
+      <button onclick="doLogin()" style="width:100%;padding:13px;background:linear-gradient(90deg,#009e38,#00d44c);color:#020d14;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;">INGRESAR AL LAB →</button>
+      <div id="l-err" style="display:none;color:#f87171;font-size:11px;text-align:center;margin-top:9px;background:rgba(239,68,68,.1);border-radius:6px;padding:7px;">Credenciales inválidas</div>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:10px;color:rgba(255,255,255,.25);">ISO 17025 · ISO 22000 · GlobalGAP · FDA FSMA</div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="pg-app" style="display:none;">
+
+<!-- HAZMAT BANNER -->
+<div id="hazmat-banner" style="display:none;" class="hazmat-alert">
+  <span style="font-size:22px;">☣️</span>
+  <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:#fff;" id="hazmat-msg">ALERTA HAZMAT ACTIVA</div><div style="font-size:11px;color:rgba(255,255,255,.7);" id="hazmat-sub"></div></div>
+  <button id="hazmat-confirm-btn" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;">✓ Confirmar Recepción</button>
+</div>
+
+<div class="sb" id="sidebar">
+  <div style="padding:12px 10px 9px;border-bottom:1px solid rgba(0,212,76,.1);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <span style="font-size:22px;">🔬</span>
+      <div><div class="brand" style="font-size:13px;font-weight:800;color:#e2e8f0;">CAIA Lab</div><div style="font-size:9px;color:rgba(0,212,76,.5);letter-spacing:1px;text-transform:uppercase;">iAGRI · ISO 17025</div></div>
+    </div>
+  </div>
+  <nav style="flex:1;padding:4px 0;overflow-y:auto;scrollbar-width:thin;">
+    <div class="sh">Gestión</div>
+    <div class="nit on" id="nav-dash" onclick="go('dash')"><span>📊</span><span>Dashboard</span></div>
+    <div class="nit" id="nav-solicitudes" onclick="go('solicitudes')"><span>🧪</span><span id="nav-sol-lbl">Solicitudes</span></div>
+    <div class="nit" id="nav-nueva" onclick="go('nueva')"><span>➕</span><span>Nueva Muestra</span></div>
+    <div class="sh">Análisis</div>
+    <div class="nit" id="nav-resultados" onclick="go('resultados')"><span>📋</span><span>Ingreso Resultados</span></div>
+    <div class="nit" id="nav-firmas" onclick="go('firmas')"><span>✍️</span><span>Firmas & Validación</span></div>
+    <div class="nit" id="nav-reportes" onclick="go('reportes')"><span>📄</span><span>Reportes & QR</span></div>
+    <div class="sh">Seguimiento</div>
+    <div class="nit" id="nav-tendencias" onclick="go('tendencias')"><span>📈</span><span>Tendencias & Control</span></div>
+    <div class="nit" id="nav-recomendaciones" onclick="go('recomendaciones')"><span>💡</span><span>Recomendaciones IA</span></div>
+    <div class="nit" id="nav-alertas" onclick="go('alertas')"><span id="alert-icon">⚠️</span><span id="nav-alert-lbl">Alertas HAZMAT</span></div>
+    <div class="sh">Infraestructura</div>
+    <div class="nit" id="nav-equipos" onclick="go('equipos')"><span>⚙️</span><span>Equipos & Calibración</span></div>
+    <div class="nit" id="nav-paneles" onclick="go('paneles')"><span>🗂️</span><span>Paneles de Análisis</span></div>
+    <div class="sh">Integración</div>
+    <div class="nit" id="nav-integra" onclick="go('integra')"><span>🔗</span><span>iAGRI Integración</span></div>
+  </nav>
+  <div style="padding:8px 10px;border-top:1px solid rgba(0,212,76,.1);">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(0,212,76,.15);display:flex;align-items:center;justify-content:center;font-size:14px;" id="sb-av-icon">🔬</div>
+      <div><div style="color:#e2e8f0;font-size:11px;font-weight:700;" id="sb-username">Usuario</div><div style="color:rgba(0,212,76,.6);font-size:9px;" id="sb-role-tag">ROL</div></div>
+    </div>
+    <div style="display:flex;gap:5px;">
+      <a href="https://www.agricola.iagri.pro" target="_blank" style="flex:1;text-align:center;font-size:9px;color:#4ade80;background:rgba(0,212,76,.07);padding:4px;border-radius:5px;border:1px solid rgba(0,212,76,.15);text-decoration:none;">🌿 Agrícola</a>
+      <a href="https://www.agroindustria.iagri.pro" target="_blank" style="flex:1;text-align:center;font-size:9px;color:#60a5fa;background:rgba(59,130,246,.07);padding:4px;border-radius:5px;border:1px solid rgba(59,130,246,.15);text-decoration:none;">🏭 Agroindustria</a>
+    </div>
+    <button onclick="doLogout()" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:6px;padding:5px;font-size:10px;cursor:pointer;margin-top:5px;">↩ Salir</button>
+  </div>
+</div>
+
+<div class="main" id="main">
+  <div class="topbar">
+    <div class="brand" style="font-size:15px;font-weight:800;color:#e2e8f0;" id="topbar-title">Dashboard Lab</div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+      <div id="hazmat-dot" style="display:none;width:10px;height:10px;border-radius:50%;background:#ff3333;animation:pulse .8s infinite;" title="Alerta HAZMAT activa"></div>
+      <div id="topbar-clock" style="font-size:10px;color:#00d44c;font-family:monospace;background:rgba(0,212,76,.07);padding:3px 8px;border-radius:5px;border:1px solid rgba(0,212,76,.14);">--:--</div>
+      <span id="topbar-rol-badge" class="badge badge-blue" style="font-size:9px;">ROL</span>
+      <span style="font-size:11px;color:#64748b;">TAT: <span id="tat-badge" style="color:#4ade80;font-weight:700;">--h</span></span>
+    </div>
+  </div>
+
+  <div style="padding:16px 22px;" id="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="sec-dash">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:16px;" id="kpi-row"></div>
+      <div id="dash-alerts-row" style="margin-bottom:14px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="card"><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📋 Solicitudes Recientes</div><div id="dash-solicitudes"></div></div>
+        <div class="card"><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">⚙️ Estado de Equipos</div><div id="dash-equipos"></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card"><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">💡 Recomendaciones Pendientes</div><div id="dash-recs"></div></div>
+        <div class="card"><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📊 Índice de Inocuidad · 78 Ha</div><div id="dash-inocuidad"></div></div>
+      </div>
+    </div>
+
+    <!-- ══ SOLICITUDES ══ -->
+    <div id="sec-solicitudes" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:9px;">
+        <div><div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;">Solicitudes de Análisis</div><div style="font-size:12px;color:#64748b;margin-top:2px;">Cadena de custodia · QR · ISO 17025</div></div>
+        <div style="display:flex;gap:7px;">
+          <select id="sol-filter-estado" onchange="loadSolicitudes()" style="width:160px;font-size:11px;padding:6px 10px;"><option value="">Todos los estados</option><option value="Recibida">Recibida</option><option value="En_Análisis">En Análisis</option><option value="Completada">Completada</option><option value="Validada">Validada</option></select>
+          <button class="btn-primary" onclick="go('nueva')">+ Nueva Muestra</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th>Muestra ID</th><th>Zona Origen</th><th>Zona Cultivo</th><th>Panel</th><th>Tipo</th><th>Fecha</th><th>Prioridad</th><th>TAT</th><th>Estado</th><th>Salud%</th><th>Firmas</th><th></th></tr></thead><tbody id="solicitudes-tbody"></tbody></table></div>
+    </div>
+
+    <!-- ══ NUEVA MUESTRA ══ -->
+    <div id="sec-nueva" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">➕ Nueva Solicitud de Análisis</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Registro de muestra con cadena de custodia y QR único</div>
+      
+      <!-- PASO 1: Origen -->
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:#00d44c;margin-bottom:12px;">1 · Origen de la Muestra</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+          <div><label>Tipo UP</label><select id="n-tipo-up" onchange="filtrarUPLab(this.value)"><option value="">Todos</option><option value="invernadero">🌿 Invernadero</option><option value="casa_malla">🏗️ Casa Malla</option><option value="campo_abierto">🌾 Campo</option></select></div>
+          <div><label>Unidad Producción *</label><select id="n-up" onchange="cargarZonasLab(this.value)"><option value="">— Seleccionar UP —</option></select></div>
+          <div><label>Zona de Cultivo</label><select id="n-zona" onchange="actualizarCultivo()"><option value="">— Toda la UP —</option></select></div>
+          <div><label>Cultivo Referencia</label><input id="n-cultivo" type="text" placeholder="Auto-detectado" readonly style="background:rgba(255,255,255,.03);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;">
+          <div><label>Punto de Muestreo</label><input id="n-punto" type="text" placeholder="Ej: Depósito solución A, Sector B2..."></div>
+          <div><label>Etapa Cultivo</label><select id="n-etapa"><option>Germinación</option><option>Vegetativo</option><option>Floración</option><option>Cuajado</option><option>Maduración</option><option>Cosecha</option></select></div>
+          <div><label>Tomado por *</label><input id="n-tomador" type="text" placeholder="Nombre del muestreador"></div>
+        </div>
+      </div>
+
+      <!-- PASO 2: Muestra -->
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:#00d44c;margin-bottom:12px;">2 · Tipo de Muestra y Parámetros de Campo</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+          <div><label>Tipo de Muestra *</label><select id="n-tipo-muestra" onchange="filtrarPanelesLab(this.value)"><option value="">— Seleccionar —</option><option value="SolucionNutricional">💧 Solución Nutritiva</option><option value="Agua">🚰 Agua Riego/Red</option><option value="Suelo">🌱 Suelo/Sustrato</option><option value="Tejido_Vegetal">🌿 Tejido Vegetal (Hoja/Raíz/Fruto)</option><option value="Hoja">🍃 Hoja (SPAD/Foliar)</option><option value="Aire">🌬️ Aire/Ambiente</option><option value="Ambiente">⚡ Energía/Campo Magnético</option></select></div>
+          <div><label>Fecha Toma *</label><input id="n-fecha" type="date"></div>
+          <div><label>Hora Toma</label><input id="n-hora" type="time"></div>
+          <div><label>Prioridad</label><select id="n-prioridad"><option value="Normal">Normal</option><option value="Alta">Alta</option><option value="Urgente">🚨 Urgente</option><option value="Baja">Baja</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:10px;">
+          <div><label>pH en Campo</label><input id="n-ph" type="number" step="0.1" placeholder="—"></div>
+          <div><label>CE en Campo (mS/cm)</label><input id="n-ec" type="number" step="0.01" placeholder="—"></div>
+          <div><label>Temp. Muestra (°C)</label><input id="n-temp" type="number" step="0.1" placeholder="—"></div>
+          <div><label>Volumen/Peso (mL/g)</label><input id="n-volumen" type="number" step="0.1" placeholder="—"></div>
+        </div>
+      </div>
+
+      <!-- PASO 3: Panel -->
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:#00d44c;margin-bottom:12px;">3 · Panel de Análisis</div>
+        <div id="paneles-selector" style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;"></div>
+        <div id="panel-selected" style="display:none;margin-top:12px;background:rgba(0,212,76,.07);border:1px solid rgba(0,212,76,.18);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:700;color:#00d44c;margin-bottom:5px;">Panel seleccionado:</div>
+          <div id="panel-selected-info"></div>
+        </div>
+      </div>
+
+      <!-- PASO 4: Notas y Envío -->
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:#00d44c;margin-bottom:10px;">4 · Observaciones y Envío</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label>Condiciones de toma</label><textarea id="n-condiciones" rows="2" placeholder="Temperatura ambiente, condiciones especiales..."></textarea></div>
+          <div><label>Notas adicionales</label><textarea id="n-notas" rows="2" placeholder="Observaciones relevantes del muestreador..."></textarea></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" onclick="saveSolicitud()" style="padding:11px 24px;font-size:13px;">🔬 Registrar Muestra y Generar QR</button>
+        <button class="btn-outline" onclick="go('solicitudes')">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- ══ RESULTADOS ══ -->
+    <div id="sec-resultados" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:9px;">
+        <div><div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;">Ingreso de Resultados</div><div style="font-size:12px;color:#64748b;margin-top:2px;">Validación automática vs límites legales · ISO 17025</div></div>
+      </div>
+      <div style="margin-bottom:12px;"><label>Seleccionar Solicitud</label><select id="res-solicitud" onchange="loadParamsForSolicitud(this.value)" style="max-width:500px;"><option value="">— Seleccionar muestra activa —</option></select></div>
+      <div id="res-form" style="display:none;"></div>
+    </div>
+
+    <!-- ══ FIRMAS Y VALIDACIÓN ══ -->
+    <div id="sec-firmas" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">✍️ Firmas y Validación Digital</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">Analista → Supervisor → Director Científico</div>
+      <div id="firmas-list"></div>
+    </div>
+
+    <!-- ══ REPORTES ══ -->
+    <div id="sec-reportes" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">📄 Reportes & QR de Trazabilidad</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">Certificados de inocuidad · QR blockchain · Distribución automática</div>
+      <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th>Muestra</th><th>Zona</th><th>Panel</th><th>Fecha</th><th>Salud%</th><th>Resultado</th><th>Firmas</th><th>Notificados</th><th></th></tr></thead><tbody id="reportes-tbody"></tbody></table></div>
+    </div>
+
+    <!-- ══ TENDENCIAS ══ -->
+    <div id="sec-tendencias" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">📈 Cartas de Control y Tendencias</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">Detección temprana de desviaciones · Historial por zona</div>
+      <div id="tendencias-content"></div>
+    </div>
+
+    <!-- ══ RECOMENDACIONES ══ -->
+    <div id="sec-recomendaciones" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:9px;">
+        <div><div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;">Recomendaciones Técnicas</div><div style="font-size:12px;color:#64748b;margin-top:2px;">IA + Laboratorista · Marco (Nutrición) · Elena (Fito)</div></div>
+      </div>
+      <div id="recomendaciones-list"></div>
+    </div>
+
+    <!-- ══ ALERTAS ══ -->
+    <div id="sec-alertas" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">⚠️ Alertas HAZMAT & Notificaciones</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">Patógenos críticos · LMR · PHI · Bloqueos automáticos</div>
+      <div id="alertas-content"></div>
+    </div>
+
+    <!-- ══ EQUIPOS ══ -->
+    <div id="sec-equipos" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:9px;">
+        <div><div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;">Equipos de Laboratorio</div><div style="font-size:12px;color:#64748b;margin-top:2px;">Calibración · Mantenimiento · Trazabilidad metrológica</div></div>
+        <button class="btn-primary" onclick="document.getElementById('modal-equipo').style.display='flex'">+ Registrar Equipo</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="equipos-grid"></div>
+    </div>
+
+    <!-- ══ PANELES ══ -->
+    <div id="sec-paneles" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">🗂️ Paneles de Análisis</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">11 paneles · 37 parámetros · Métodos ISO</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="paneles-grid"></div>
+    </div>
+
+    <!-- ══ INTEGRACIÓN ══ -->
+    <div id="sec-integra" style="display:none;">
+      <div class="brand" style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px;">🔗 Integración iAGRI</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px;">Flujo automático: Lab → Agrícola → Agroindustria → Comercial</div>
+      <div id="integra-content"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══ MODAL QR / REPORTE ══ -->
+<div id="modal-reporte" style="display:none;" class="modal-bg">
+  <div class="modal modal-lg">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="brand" style="font-size:15px;font-weight:800;color:#00d44c;">📄 Certificado de Análisis & QR</div>
+      <button onclick="document.getElementById('modal-reporte').style.display='none'" style="background:rgba(255,255,255,.07);border:none;border-radius:6px;padding:5px 9px;cursor:pointer;color:#94a3b8;font-size:14px;">✕</button>
+    </div>
+    <div id="modal-reporte-content"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+      <button class="btn-outline" onclick="document.getElementById('modal-reporte').style.display='none'">Cerrar</button>
+      <button class="btn-primary" onclick="window.print()">🖨️ Imprimir / PDF</button>
+      <button class="btn-blue" onclick="distribuirReporte()">📨 Distribuir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Equipo -->
+<div id="modal-equipo" style="display:none;" class="modal-bg">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="brand" style="font-size:15px;font-weight:800;color:#e2e8f0;">⚙️ Registrar Equipo</div>
+      <button onclick="document.getElementById('modal-equipo').style.display='none'" style="background:rgba(255,255,255,.07);border:none;border-radius:6px;padding:5px 9px;cursor:pointer;color:#94a3b8;font-size:14px;">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label>Nombre *</label><input id="eq-nombre" type="text" placeholder="Ej: pH-metro Hanna HI5521"></div>
+      <div><label>Tipo *</label><select id="eq-tipo"><option>pH_metro</option><option>Conductímetro</option><option>Espectrómetro</option><option>Microscopio</option><option>PCR</option><option>Gaussímetro</option><option>SPAD-metro</option><option>Incubadora</option><option>Autoclave</option><option>Balanza</option></select></div>
+      <div><label>Marca</label><input id="eq-marca" type="text" placeholder="Hanna, YSI, Shimadzu..."></div>
+      <div><label>Modelo</label><input id="eq-modelo" type="text"></div>
+      <div><label>N° Serie</label><input id="eq-serie" type="text"></div>
+      <div><label>Últ. Calibración</label><input id="eq-cal" type="date"></div>
+      <div><label>Próx. Calibración</label><input id="eq-cal-next" type="date"></div>
+      <div><label>Estado</label><select id="eq-estado"><option>Operativo</option><option>Calibración</option><option>Mantenimiento</option><option>Dañado</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+      <button class="btn-outline" onclick="document.getElementById('modal-equipo').style.display='none'">Cancelar</button>
+      <button class="btn-primary" onclick="saveEquipo()">💾 Guardar Equipo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resultados Ingreso -->
+<div id="modal-resultado-detail" style="display:none;" class="modal-bg">
+  <div class="modal modal-lg">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div><div class="brand" style="font-size:15px;font-weight:800;color:#e2e8f0;" id="res-modal-titulo">Ingresar Resultado</div><div style="font-size:11px;color:#64748b;" id="res-modal-sub"></div></div>
+      <button onclick="document.getElementById('modal-resultado-detail').style.display='none'" style="background:rgba(255,255,255,.07);border:none;border-radius:6px;padding:5px 9px;cursor:pointer;color:#94a3b8;font-size:14px;">✕</button>
+    </div>
+    <div id="res-modal-content"></div>
+  </div>
+</div>
+
+<!-- Modal Distribución -->
+<div id="modal-distrib" style="display:none;" class="modal-bg">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="brand" style="font-size:15px;font-weight:800;color:#e2e8f0;">📨 Estado de Distribución</div>
+      <button onclick="document.getElementById('modal-distrib').style.display='none'" style="background:rgba(255,255,255,.07);border:none;border-radius:6px;padding:5px 9px;cursor:pointer;color:#94a3b8;font-size:14px;">✕</button>
+    </div>
+    <div id="modal-distrib-content"></div>
+  </div>
+</div>
+
+<div id="toast-msg" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#0b1929;color:#e2e8f0;padding:8px 18px;border-radius:22px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;border:1px solid rgba(0,212,76,.25);max-width:90vw;text-align:center;"></div>
+
+<script>
+// ══ CONFIG ══
+var SURL='https://crfghwtfqaplzsmwylxe.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZmdod3RmcWFwbHpzbXd5bHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjc1MjksImV4cCI6MjA5MDkwMzUyOX0.WUNkTqU93H92nohb_Idqhu8nV1JblFvVRk6Lf_PJw64';
+
+var db=null;
+(function(){try{if(window.supabase&&window.supabase.createClient){db=window.supabase.createClient(SURL,SKEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});}}catch(e){console.warn('SB',e);}})();
+function dbQ(fn){if(!db)return Promise.resolve({data:null,error:{message:'offline'}});try{return fn(db);}catch(e){return Promise.resolve({data:null,error:{message:String(e)}});}}
+function _v(id){var e=document.getElementById(id);return e?e.value:'';}
+function _n(id){var v=parseFloat(_v(id));return isNaN(v)?null:v;}
+function _clean(obj){var o={};Object.keys(obj).forEach(function(k){var v=obj[k];if(v===undefined||v===null||v==='')return;if(typeof v==='number'&&isNaN(v))return;o[k]=v;});return o;}
+
+// ══ STATE ══
+var me=null;
+var SOLICITUDES=[],PANELES=[],PARAMETROS={},EQUIPOS=[],RECS=[],UPS_LAB=[];
+var _selectedPanel=null,_selectedSolicitud=null;
+
+// ══ SIM UPs (same as agricola) ══
+var UPS_SIM=(function(){
+  var inv=[];var CULTS=['Tomate Cherry','Tomate Cherry','Pepino Hidropónico','Pepino Hidropónico','Pimiento Rojo','Pimiento Amarillo','Tomate Bola','Tomate Pony',null,'Lechuga Butterhead','Tomate Cherry','Tomate Roma','Pepino Manzano','Berenjena','Tomate Cherry','Pimiento Verde','Pepino Hidropónico','Tomate Bola',null,'Lechuga Romana','Tomate Cherry','Pepino Europeo','Pimiento Morrón','Tomate Pony','Tomate Chonto',null,'Berenjena','Pepino','Tomate Cherry','Lechuga Butterhead','Pimiento Rojo','Tomate Roma','Pepino Manzano',null,'Tomate Cherry'];
+  for(var i=0;i<35;i++){var n=i+1;inv.push({up_id:'up-inv-'+('0'+n).slice(-2),codigo:'INV-'+('0'+n).slice(-2),tipo:'invernadero',cultivo_actual:CULTS[i]});}
+  var cms=['Mix Lechugas','Espinaca Baby','Albahaca','Mix Hierbas','Rúcula','Kale',null,'Cebollín'];
+  for(var i=0;i<8;i++){var n=i+1;inv.push({up_id:'up-cm-'+('0'+n).slice(-2),codigo:'CM-'+('0'+n).slice(-2),tipo:'casa_malla',cultivo_actual:cms[i]});}
+  var cas=['Tomate Roma','Maíz Amarillo','Chile Morrón',null,'Sandía','Melón','Yuca',null];
+  for(var i=0;i<8;i++){var n=i+1;inv.push({up_id:'up-ca-'+('0'+n).slice(-2),codigo:'CA-'+('0'+n).slice(-2),tipo:'campo_abierto',cultivo_actual:cas[i]});}
+  return inv;
+}());
+
+// ══ ZONAS CULTIVO ══
+var ZONAS_SIM=(function(){
+  var z={};
+  for(var i=1;i<=35;i++){var uid='up-inv-'+('0'+i).slice(-2);z[uid]=[];for(var j=1;j<=19;j++){z[uid].push({zona_id:uid+'-A'+('0'+j).slice(-2),codigo:'A'+('0'+j).slice(-2)});z[uid].push({zona_id:uid+'-B'+('0'+j).slice(-2),codigo:'B'+('0'+j).slice(-2)});}}
+  for(var i=1;i<=8;i++){var uid='up-cm-'+('0'+i).slice(-2);z[uid]=[];for(var j=1;j<=8;j++){z[uid].push({zona_id:uid+'-Z'+('0'+j).slice(-2),codigo:'Z'+('0'+j).slice(-2)});}}
+  for(var i=1;i<=8;i++){var uid='up-ca-'+('0'+i).slice(-2);z[uid]=[];for(var j=1;j<=35;j++){z[uid].push({zona_id:uid+'-Z'+('0'+j).slice(-2),codigo:'Z'+('0'+j).slice(-2)});}}
+  return z;
+}());
+
+// SIM SOLICITUDES
+var SIM_SOL=[
+  {solicitud_id:'LAB-2026-00001',numero_muestra:'LAB-2026-00001',unidad_id:'up-inv-03',nave_id:'up-inv-03',zona_cultivo_id:'up-inv-03-A08',panel_id:'PAN-SOL-NFT',tipo_analisis:'NutricionSoluciones',muestra_tipo:'SolucionNutricional',fecha_toma_muestra:'2026-04-16',cultivo_referencia:'Pepino Hidropónico',etapa_cultivo:'Cosecha',tomado_por:'Ana Martínez',estado:'Validada',prioridad:'Normal',costo_analisis:150,indice_salud:96.0,resultado_general:'Óptimo',firmado_analista:true,firmado_supervisor:true,bloquea_lote:false},
+  {solicitud_id:'LAB-2026-00002',numero_muestra:'LAB-2026-00002',unidad_id:'up-inv-01',nave_id:'up-inv-01',zona_cultivo_id:'up-inv-01-B12',panel_id:'PAN-AGUA-BASICO',tipo_analisis:'Fisicoquimico',muestra_tipo:'Agua',fecha_toma_muestra:'2026-04-17',cultivo_referencia:'Tomate Cherry',etapa_cultivo:'Maduracion',tomado_por:'Carlos Ramos',estado:'Completada',prioridad:'Alta',costo_analisis:85,indice_salud:72.0,resultado_general:'Aceptable',firmado_analista:true,firmado_supervisor:false,bloquea_lote:false},
+  {solicitud_id:'LAB-2026-00003',numero_muestra:'LAB-2026-00003',unidad_id:'up-inv-05',nave_id:'up-inv-05',zona_cultivo_id:'up-inv-05-A03',panel_id:'PAN-MICRO',tipo_analisis:'Microbiologico',muestra_tipo:'Agua',fecha_toma_muestra:'2026-04-16',cultivo_referencia:'Pimiento Rojo',etapa_cultivo:'Cosecha',tomado_por:'Ana Martínez',estado:'Validada',prioridad:'Urgente',costo_analisis:200,indice_salud:55.0,resultado_general:'Crítico',firmado_analista:true,firmado_supervisor:true,bloquea_lote:true,bloquea_cosecha:true,bloquea_despacho:true,notificado_agricola:true},
+  {solicitud_id:'LAB-2026-00004',numero_muestra:'LAB-2026-00004',unidad_id:'up-inv-07',nave_id:'up-inv-07',zona_cultivo_id:null,panel_id:'PAN-FITO',tipo_analisis:'Fitopatogenos',muestra_tipo:'Tejido_Vegetal',fecha_toma_muestra:'2026-04-17',cultivo_referencia:'Tomate Bola',etapa_cultivo:'Vegetativo',tomado_por:'Carlos Ramos',estado:'En_Análisis',prioridad:'Urgente',costo_analisis:350,indice_salud:null,resultado_general:null,firmado_analista:false,firmado_supervisor:false,bloquea_lote:false},
+  {solicitud_id:'LAB-2026-00005',numero_muestra:'LAB-2026-00005',unidad_id:'up-cm-01',nave_id:'up-cm-01',zona_cultivo_id:'up-cm-01-Z03',panel_id:'PAN-SALUD-VEG',tipo_analisis:'SaludVegetal',muestra_tipo:'Hoja',fecha_toma_muestra:'2026-04-15',cultivo_referencia:'Mix Lechugas',etapa_cultivo:'Vegetativo',tomado_por:'Ana Martínez',estado:'Completada',prioridad:'Normal',costo_analisis:220,indice_salud:91.0,resultado_general:'Óptimo',firmado_analista:true,firmado_supervisor:false,bloquea_lote:false},
+  {solicitud_id:'LAB-2026-00006',numero_muestra:'LAB-2026-00006',unidad_id:'up-inv-03',nave_id:'up-inv-03',zona_cultivo_id:null,panel_id:'PAN-AMBIENTAL',tipo_analisis:'Ambiental',muestra_tipo:'Aire',fecha_toma_muestra:'2026-04-18',cultivo_referencia:'Pepino Hidropónico',etapa_cultivo:'Cosecha',tomado_por:'Roberto Silva',estado:'Recibida',prioridad:'Normal',costo_analisis:95,indice_salud:null,resultado_general:null,firmado_analista:false,firmado_supervisor:false,bloquea_lote:false}
+];
+var SIM_PANELES=[
+  {panel_id:'PAN-AGUA-BASICO',nombre:'Análisis Agua Básico',tipo_analisis:'Fisicoquimico',muestra_tipo:'Agua',descripcion:'pH, CE, Nitratos, Carbonatos, Dureza',tiempo_analisis_h:24,costo_base:85,requiere_equipo:['pH-metro','Conductímetro']},
+  {panel_id:'PAN-AGUA-COMP',nombre:'Análisis Agua Completo',tipo_analisis:'Fisicoquimico',muestra_tipo:'Agua',descripcion:'Macro y micronutrientes + metales pesados',tiempo_analisis_h:48,costo_base:250,requiere_equipo:['ICP-OES','pH-metro']},
+  {panel_id:'PAN-SOL-NFT',nombre:'Solución Nutritiva NFT',tipo_analisis:'NutricionSoluciones',muestra_tipo:'SolucionNutricional',descripcion:'Análisis completo N-P-K-Ca-Mg + micronutrientes',tiempo_analisis_h:24,costo_base:150,requiere_equipo:['ICP-OES','pH-metro']},
+  {panel_id:'PAN-SUELO-BASICO',nombre:'Suelo Básico',tipo_analisis:'Fisicoquimico',muestra_tipo:'Suelo',descripcion:'pH, MO, P, K, CIC básicos',tiempo_analisis_h:48,costo_base:120,requiere_equipo:['Espectrómetro','Balanza']},
+  {panel_id:'PAN-MICRO',nombre:'Microbiológico',tipo_analisis:'Microbiologico',muestra_tipo:'Agua',descripcion:'Coliformes, E.coli, Salmonella, Listeria, Hongos',tiempo_analisis_h:72,costo_base:200,requiere_equipo:['Microscopio','Incubadora','PCR']},
+  {panel_id:'PAN-FITO',nombre:'Fitopatógenos',tipo_analisis:'Fitopatogenos',muestra_tipo:'Tejido_Vegetal',descripcion:'Phytophthora, Fusarium, Virus ToBRFV, Nematodos',tiempo_analisis_h:72,costo_base:350,requiere_equipo:['PCR','Microscopio','ELISA']},
+  {panel_id:'PAN-SALUD-VEG',nombre:'Salud Vegetal Integral',tipo_analisis:'SaludVegetal',muestra_tipo:'Hoja',descripcion:'SPAD, NDVI, nutrición foliar, estrés',tiempo_analisis_h:24,costo_base:220,requiere_equipo:['SPAD-metro','Espectrómetro']},
+  {panel_id:'PAN-AMBIENTAL',nombre:'Ambiente Nave',tipo_analisis:'Ambiental',muestra_tipo:'Aire',descripcion:'CO₂, T°, Humedad, Luminosidad, VOCs',tiempo_analisis_h:8,costo_base:95,requiere_equipo:['CO2-metro','Termómetro','Luxómetro']},
+  {panel_id:'PAN-ENERGIA',nombre:'Energía / Magnetismo',tipo_analisis:'Energia',muestra_tipo:'Ambiente',descripcion:'Campo magnético, radiofrecuencias, biofotones, PAR',tiempo_analisis_h:24,costo_base:280,requiere_equipo:['Gaussímetro','Luxómetro']}
+];
+var SIM_EQUIPOS=[
+  {equipo_id:'EQ-001',nombre:'pH-metro Hanna HI5521',tipo:'pH_metro',marca:'Hanna',modelo:'HI5521',estado:'Operativo',ultimo_calibrado:'2024-06-01',proximo_calibrado:'2025-06-01',parametros_medidos:['pH','Redox'],precision_declarada:'±0.001 pH',responsable:'Ana Martínez'},
+  {equipo_id:'EQ-002',nombre:'Conductímetro YSI Pro30',tipo:'Conductímetro',marca:'YSI',modelo:'Pro30',estado:'Operativo',ultimo_calibrado:'2024-06-01',proximo_calibrado:'2025-06-01',parametros_medidos:['CE','TDS'],precision_declarada:'±0.5%',responsable:'Ana Martínez'},
+  {equipo_id:'EQ-003',nombre:'Espectrofotómetro Shimadzu UV-1280',tipo:'Espectrómetro',marca:'Shimadzu',modelo:'UV-1280',estado:'Calibración',ultimo_calibrado:'2024-01-01',proximo_calibrado:'2025-01-01',parametros_medidos:['Nitratos','Fósforo'],precision_declarada:'±0.002 Abs',responsable:'Ana Martínez'},
+  {equipo_id:'EQ-004',nombre:'Microscopio Olympus CX23',tipo:'Microscopio',marca:'Olympus',modelo:'CX23',estado:'Operativo',ultimo_calibrado:'2024-03-01',proximo_calibrado:'2025-03-01',parametros_medidos:['Microbiología','Fito'],precision_declarada:'40x-1000x',responsable:'Ana Martínez'},
+  {equipo_id:'EQ-005',nombre:'Gaussímetro AlphaLab GM-2',tipo:'Gaussímetro',marca:'AlphaLab',modelo:'GM-2',estado:'Operativo',ultimo_calibrado:'2024-08-01',proximo_calibrado:'2025-08-01',parametros_medidos:['Campo Magnético'],precision_declarada:'±2%',responsable:'Ana Martínez'},
+  {equipo_id:'EQ-006',nombre:'PCR QuantStudio 3',tipo:'PCR',marca:'Applied Biosystems',modelo:'QuantStudio 3',estado:'Operativo',ultimo_calibrado:'2024-06-01',proximo_calibrado:'2025-06-01',parametros_medidos:['Virus','Fitopatógenos'],precision_declarada:'±0.25°C',responsable:'Ana Martínez'},
+  {equipo_id:'EQ-007',nombre:'Medidor SPAD-502Plus',tipo:'SPAD-metro',marca:'Konica Minolta',modelo:'SPAD-502Plus',estado:'Operativo',ultimo_calibrado:'2024-09-01',proximo_calibrado:'2025-09-01',parametros_medidos:['Clorofila','SPAD'],precision_declarada:'±1 SPAD',responsable:'Ana Martínez'}
+];
+var SIM_RECS=[
+  {recomendacion_id:1,solicitud_id:'LAB-2026-00002',tipo_fuente:'Laboratorista',prioridad:'Alta',categoria:'Corrección_pH',titulo:'Ajuste urgente pH agua INV-01',descripcion:'pH 4.8 debajo del óptimo (5.5-7.0). Riesgo de deficiencias Ca/Mg en Tomate Cherry semana 14.',producto_sugerido:'KOH 40%',dosis:'5-10 mL/1000L hasta pH 6.2',tiempo_respuesta_h:2,aplicada:false},
+  {recomendacion_id:2,solicitud_id:'LAB-2026-00003',tipo_fuente:'Sistema',prioridad:'Urgente',categoria:'Bioseguridad',titulo:'⚠️ HAZMAT: Salmonella INV-05 — CUARENTENA TOTAL',descripcion:'SALMONELLA DETECTADA en agua de riego INV-05. BLOQUEO TOTAL INMEDIATO. Activar protocolo de desinfección. Notificar: Santiago (COO), Yanilka (Inocuidad), propietario de INV-05.',producto_sugerido:'NaClO 5%',dosis:'Desinfección total sistema de riego',tiempo_respuesta_h:0,aplicada:false},
+  {recomendacion_id:3,solicitud_id:'LAB-2026-00001',tipo_fuente:'IA',prioridad:'Media',categoria:'Fertilización',titulo:'Monitoreo Fe/Mn solución INV-03',descripcion:'Fe y Mn en límite superior del rango. Seguimiento bisemanal recomendado para evitar toxicidad en cosecha.',producto_sugerido:'Sin cambio inmediato',dosis:'Monitoreo continuo',tiempo_respuesta_h:24,aplicada:false}
+];
+
+function upMap(){var m={};UPS_SIM.forEach(function(u){m[u.up_id]=u;});return m;}
+
+// ══ AUTH ══
+function doLogin(){
+  var u=document.getElementById('l-u').value.trim();
+  var p=document.getElementById('l-p').value.trim();
+  var rol=_v('l-rol');
+  var ok=(u==='admin@iagri.app'&&p==='iAGRI2026!')||(u==='admin@agrosense.co'&&p==='agro2026');
+  if(!ok){document.getElementById('l-err').style.display='block';return;}
+  me={email:u,rol:rol,nombre:rol==='director_cientifico'?'Dr. Director CAIA':rol==='analista_lab'?'Ana Martínez — Analista':rol==='tecnico_campo'?'Carlos Ramos — Campo':rol==='gerente_agricola'?'Gerente Agrícola':rol==='propietario'?'Propietario / Socio':'Gerente Agroindustria'};
+  var icons={director_cientifico:'🧬',analista_lab:'🔬',tecnico_campo:'🌿',gerente_agricola:'🌾',propietario:'💼',agroindustria:'🏭'};
+  document.getElementById('sb-av-icon').textContent=icons[rol]||'👤';
+  document.getElementById('sb-username').textContent=me.nombre;
+  document.getElementById('sb-role-tag').textContent=rol.replace(/_/g,' ').toUpperCase();
+  document.getElementById('topbar-rol-badge').textContent=me.nombre.split('—')[0].trim();
+  document.getElementById('pg-login').style.display='none';
+  document.getElementById('pg-app').style.display='block';
+  UPS_LAB=UPS_SIM;
+  populateUPSelect();
+  initApp();
+}
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('pg-login').style.display!=='none')doLogin();});
+function doLogout(){me=null;document.getElementById('pg-app').style.display='none';document.getElementById('pg-login').style.display='flex';}
+function canSign(){return me&&(me.rol==='director_cientifico'||me.rol==='analista_lab'||me.rol==='gerente_agricola');}
+function canHazmat(){return me&&(me.rol==='director_cientifico'||me.rol==='analista_lab');}
+
+setInterval(function(){var e=document.getElementById('topbar-clock');if(e)e.textContent=new Date().toLocaleString('es-SV',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit'});},1000);
+
+// ══ NAV ══
+var SECS=['dash','solicitudes','nueva','resultados','firmas','reportes','tendencias','recomendaciones','alertas','equipos','paneles','integra'];
+var TITLES={dash:'Dashboard · CAIA Lab',solicitudes:'Solicitudes de Análisis',nueva:'Nueva Muestra',resultados:'Ingreso de Resultados',firmas:'Firmas & Validación',reportes:'Reportes & QR',tendencias:'Tendencias & Control',recomendaciones:'Recomendaciones IA',alertas:'Alertas HAZMAT',equipos:'Equipos Lab',paneles:'Paneles de Análisis',integra:'Integración iAGRI'};
+var LOADERS={dash:loadDash,solicitudes:loadSolicitudes,nueva:loadNueva,resultados:loadResultadosTab,firmas:loadFirmas,reportes:loadReportes,tendencias:loadTendencias,recomendaciones:loadRecs,alertas:loadAlertas,equipos:loadEquipos,paneles:loadPaneles,integra:loadIntegra};
+function go(sec){
+  SECS.forEach(function(s){document.getElementById('sec-'+s).style.display=s===sec?'block':'none';});
+  SECS.forEach(function(s){var n=document.getElementById('nav-'+s);if(n){n.classList.toggle('on',s===sec);}});
+  var tt=document.getElementById('topbar-title');if(tt)tt.textContent=TITLES[sec]||sec;
+  if(LOADERS[sec])LOADERS[sec]();
+}
+
+// ══ INIT ══
+async function initApp(){
+  var r=await dbQ(function(d){return d.from('lab_solicitudes').select('*').order('created_at',{ascending:false});});
+  SOLICITUDES=(r.data&&r.data.length)?r.data:SIM_SOL;
+  var rp=await dbQ(function(d){return d.from('lab_paneles_analisis').select('*').eq('activo',true);});
+  PANELES=(rp.data&&rp.data.length)?rp.data:SIM_PANELES;
+  var re=await dbQ(function(d){return d.from('lab_equipos').select('*').order('equipo_id');});
+  EQUIPOS=(re.data&&re.data.length)?re.data:SIM_EQUIPOS;
+  var rr=await dbQ(function(d){return d.from('lab_recomendaciones').select('*').order('created_at',{ascending:false});});
+  SIM_RECS=(rr.data&&rr.data.length)?rr.data:SIM_RECS;
+  checkHazmat();
+  loadDash();
+}
+
+function checkHazmat(){
+  var hazmat=SOLICITUDES.filter(function(s){return s.bloquea_lote||s.bloquea_cosecha;});
+  if(hazmat.length){
+    document.getElementById('hazmat-banner').style.display='flex';
+    document.getElementById('hazmat-dot').style.display='block';
+    document.getElementById('hazmat-msg').textContent='☣️ ALERTA HAZMAT ACTIVA — '+hazmat.length+' muestra(s) con resultado crítico';
+    document.getElementById('hazmat-sub').textContent=hazmat.map(function(s){return s.numero_muestra+' ('+s.unidad_id+')';}).join(' · ');
+    document.getElementById('nav-alert-lbl').textContent='Alertas HAZMAT ('+hazmat.length+')';
+    document.getElementById('alert-icon').textContent='☣️';
+  }
+}
+
+function populateUPSelect(){
+  var all=UPS_LAB.map(function(u){var i=u.tipo==='invernadero'?'🌿':u.tipo==='casa_malla'?'🏗️':'🌾';return '<option value="'+u.up_id+'">'+i+' '+u.codigo+(u.cultivo_actual?' — '+u.cultivo_actual:'')+'</option>';}).join('');
+  ['n-up'].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML='<option value="">— Seleccionar UP —</option>'+all;});
+}
+
+function filtrarUPLab(tipo){
+  var el=document.getElementById('n-up');if(!el)return;
+  var f=tipo?UPS_LAB.filter(function(u){return u.tipo===tipo;}):UPS_LAB;
+  el.innerHTML='<option value="">—</option>'+f.map(function(u){var i=u.tipo==='invernadero'?'🌿':u.tipo==='casa_malla'?'🏗️':'🌾';return '<option value="'+u.up_id+'">'+i+' '+u.codigo+(u.cultivo_actual?' — '+u.cultivo_actual:'')+'</option>';}).join('');
+}
+
+function cargarZonasLab(upId){
+  var el=document.getElementById('n-zona');if(!el)return;
+  var zonas=ZONAS_SIM[upId]||[];
+  var u=UPS_LAB.find(function(x){return x.up_id===upId;})||{};
+  if(u.cultivo_actual){var ce=document.getElementById('n-cultivo');if(ce)ce.value=u.cultivo_actual;}
+  el.innerHTML='<option value="">— Toda la UP —</option>'+zonas.map(function(z){return '<option value="'+z.zona_id+'">'+z.codigo+'</option>';}).join('');
+}
+function actualizarCultivo(){}
+
+function filtrarPanelesLab(tipoMuestra){
+  var filtered=PANELES.filter(function(p){
+    if(!tipoMuestra)return true;
+    var map={'SolucionNutricional':['NutricionSoluciones','PAN-SOL-NFT'],'Agua':['Fisicoquimico','Microbiologico'],'Suelo':['Fisicoquimico','Sustrato'],'Tejido_Vegetal':['Fitopatogenos','SaludVegetal'],'Hoja':['SaludVegetal','Fitopatogenos'],'Aire':['Ambiental'],'Ambiente':['Energia']};
+    var allowed=map[tipoMuestra]||[];
+    return allowed.some(function(a){return p.tipo_analisis===a||p.panel_id===a;});
+  });
+  if(!filtered.length)filtered=PANELES;
+  renderPanelesSelector(filtered);
+}
+
+function renderPanelesSelector(list){
+  var TYPE_ICON={Fisicoquimico:'💧',NutricionSoluciones:'🧪',Microbiologico:'🦠',Fitopatogenos:'🦟',SaludVegetal:'🌿',Ambiental:'🌬️',Energia:'⚡',Sustrato:'🌱'};
+  document.getElementById('paneles-selector').innerHTML=list.map(function(p){
+    var icon=TYPE_ICON[p.tipo_analisis]||'🔬';
+    var sel=_selectedPanel&&_selectedPanel.panel_id===p.panel_id;
+    return '<div class="panel-card '+(sel?'selected':'')+'" onclick="selectPanel(\''+p.panel_id+'\')" id="pcard-'+p.panel_id+'">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">'
+      +'<span style="font-size:18px;">'+icon+'</span>'
+      +'<span style="font-size:9px;font-weight:700;color:#64748b;background:rgba(255,255,255,.05);padding:2px 6px;border-radius:10px;">'+p.tiempo_analisis_h+'h</span>'
+      +'</div>'
+      +'<div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:3px;">'+p.nombre+'</div>'
+      +'<div style="font-size:10px;color:#64748b;margin-bottom:5px;">'+(p.descripcion||'').substring(0,55)+'</div>'
+      +'<div style="font-size:11px;font-weight:700;color:#00d44c;">$'+p.costo_base+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function selectPanel(panelId){
+  _selectedPanel=PANELES.find(function(p){return p.panel_id===panelId;});
+  document.querySelectorAll('.panel-card').forEach(function(el){el.classList.remove('selected');});
+  var c=document.getElementById('pcard-'+panelId);if(c)c.classList.add('selected');
+  var div=document.getElementById('panel-selected');
+  var info=document.getElementById('panel-selected-info');
+  if(_selectedPanel){
+    div.style.display='block';
+    info.innerHTML='<span style="color:#e2e8f0;font-weight:700;">'+_selectedPanel.nombre+'</span>'
+      +' · <span style="color:#64748b;">'+_selectedPanel.muestra_tipo+'</span>'
+      +' · <span style="color:#00d44c;">$'+_selectedPanel.costo_base+'</span>'
+      +' · <span style="color:#64748b;">'+_selectedPanel.tiempo_analisis_h+'h TAT</span>'
+      +((_selectedPanel.requiere_equipo||[]).length?' · Equipos: <span style="color:#60a5fa;">'+(_selectedPanel.requiere_equipo||[]).join(', ')+'</span>':'');
+  }
+}
+
+// ══ DASHBOARD ══
+function loadDash(){
+  var total=SOLICITUDES.length;
+  var pend=SOLICITUDES.filter(function(s){return s.estado==='Recibida'||s.estado==='En_Análisis';}).length;
+  var hazmat=SOLICITUDES.filter(function(s){return s.bloquea_lote||s.bloquea_cosecha;}).length;
+  var validadas=SOLICITUDES.filter(function(s){return s.estado==='Validada';}).length;
+  var firmPend=SOLICITUDES.filter(function(s){return !s.firmado_supervisor&&(s.estado==='Completada'||s.estado==='Validada');}).length;
+  var equCal=EQUIPOS.filter(function(e){return e.estado==='Calibración'||e.estado==='Mantenimiento';}).length;
+  var avgTat=24;
+  var upMapObj=upMap();
+  document.getElementById('kpi-row').innerHTML=[
+    {icon:'🧪',label:'Solicitudes Activas',value:pend+'/'+total,color:'#00d44c',bg:'rgba(0,212,76,.07)',sec:'solicitudes'},
+    {icon:'☣️',label:'HAZMAT / Bloqueos',value:hazmat,color:hazmat>0?'#ff3333':'#4ade80',bg:hazmat>0?'rgba(255,51,51,.08)':'rgba(34,197,94,.07)',sec:'alertas'},
+    {icon:'✍️',label:'Pend. Firma',value:firmPend,color:firmPend>0?'#fbbf24':'#4ade80',bg:firmPend>0?'rgba(245,158,11,.07)':'rgba(34,197,94,.07)',sec:'firmas'},
+    {icon:'✅',label:'Validadas OK',value:validadas,color:'#4ade80',bg:'rgba(34,197,94,.07)',sec:'reportes'},
+    {icon:'⚙️',label:'Equipos Calibración',value:equCal,color:equCal>0?'#fbbf24':'#4ade80',bg:equCal>0?'rgba(245,158,11,.07)':'rgba(34,197,94,.07)',sec:'equipos'},
+    {icon:'⏱️',label:'TAT Promedio',value:avgTat+'h',color:'#60a5fa',bg:'rgba(59,130,246,.07)',sec:'solicitudes'}
+  ].map(function(k){return '<div class="kpi-card" onclick="go(\''+k.sec+'\')" style="border-left:3px solid '+k.color+';background:'+k.bg+'"><div style="font-size:19px;">'+k.icon+'</div><div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;margin-top:3px;">'+k.label+'</div><div class="brand" style="font-size:17px;font-weight:800;color:'+k.color+';margin-top:2px;">'+k.value+'</div></div>';}).join('');
+
+  // Alert row
+  if(hazmat>0){
+    document.getElementById('dash-alerts-row').innerHTML='<div style="background:rgba(255,51,51,.12);border:1.5px solid rgba(255,51,51,.35);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;" onclick="go(\'alertas\')" style="cursor:pointer;">'
+      +'<span style="font-size:22px;animation:pulse .8s infinite;">☣️</span>'
+      +'<div style="flex:1;"><div style="font-size:13px;font-weight:800;color:#ff3333;">ALERTA HAZMAT: '+hazmat+' Muestra(s) con resultado CRÍTICO — Lotes bloqueados</div>'
+      +'<div style="font-size:11px;color:rgba(255,51,51,.7);margin-top:2px;">'+SOLICITUDES.filter(function(s){return s.bloquea_lote;}).map(function(s){return s.numero_muestra+' ('+s.unidad_id+')';}).join(' · ')+'</div></div>'
+      +'<button class="btn-sm btn-hazmat" onclick="event.stopPropagation();go(\'alertas\')">Ver Detalles</button>'
+      +'</div>';
+  }
+
+  // Recent solicitudes
+  document.getElementById('dash-solicitudes').innerHTML=SOLICITUDES.slice(0,5).map(function(s){
+    var up=upMapObj[s.unidad_id]||{};
+    var color=s.resultado_general==='Óptimo'?'#4ade80':s.resultado_general==='Aceptable'?'#fbbf24':s.resultado_general==='Crítico'?'#f87171':s.bloquea_lote?'#ff3333':'#94a3b8';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
+      +'<div><div style="font-size:11px;font-weight:700;color:#e2e8f0;">'+s.numero_muestra+'</div><div style="font-size:10px;color:#64748b;">'+(up.codigo||'—')+' · '+s.tipo_analisis+'</div></div>'
+      +'<div style="text-align:right;">'+(s.indice_salud!==null?'<div style="font-size:13px;font-weight:800;color:'+color+';">'+s.indice_salud+'%</div>':'')+estadoBadge(s.estado)+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Equipos
+  document.getElementById('dash-equipos').innerHTML=EQUIPOS.slice(0,6).map(function(e){
+    var c=e.estado==='Operativo'?'#4ade80':e.estado==='Calibración'?'#fbbf24':'#f87171';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
+      +'<div style="font-size:11px;color:#e2e8f0;">'+e.nombre+'</div>'
+      +'<span class="badge" style="color:'+c+';background:'+c+'15;border:1px solid '+c+'30;font-size:9px;">'+e.estado+'</span>'
+      +'</div>';
+  }).join('');
+
+  // Recomendaciones
+  document.getElementById('dash-recs').innerHTML=SIM_RECS.filter(function(r){return !r.aplicada;}).slice(0,4).map(function(r){
+    var c=r.prioridad==='Urgente'?'#ff3333':r.prioridad==='Alta'?'#f87171':r.prioridad==='Media'?'#fbbf24':'#94a3b8';
+    return '<div style="padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.025);border-left:3px solid '+c+';margin-bottom:6px;cursor:pointer;" onclick="go(\'recomendaciones\')">'
+      +'<div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-bottom:2px;">'+r.titulo+'</div>'
+      +'<div style="font-size:10px;color:#64748b;">'+r.tipo_fuente+' · '+r.categoria+' · '+r.prioridad+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Inocuidad gauge
+  var inocScore=hazmat>0?55:95;
+  var ic=inocScore>=90?'#4ade80':inocScore>=70?'#fbbf24':'#f87171';
+  document.getElementById('dash-inocuidad').innerHTML='<div style="text-align:center;padding:10px 0;">'
+    +'<div class="brand" style="font-size:52px;font-weight:800;color:'+ic+';">'+inocScore+'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-top:2px;">Índice Inocuidad Global / 100</div>'
+    +'<div class="prog-bar" style="margin-top:10px;height:10px;"><div class="prog-fill" style="width:'+inocScore+'%;background:'+ic+';"></div></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;font-size:10px;">'
+    +'<div style="background:rgba(255,255,255,.04);border-radius:6px;padding:7px;"><div style="color:#64748b;">Muestras OK</div><div style="color:#4ade80;font-weight:700;">'+(SOLICITUDES.filter(function(s){return s.resultado_general==='Óptimo'||s.resultado_general==='Aceptable';}).length)+'</div></div>'
+    +'<div style="background:rgba(255,255,255,.04);border-radius:6px;padding:7px;"><div style="color:#64748b;">Críticas</div><div style="color:#f87171;font-weight:700;">'+(SOLICITUDES.filter(function(s){return s.resultado_general==='Crítico';}).length)+'</div></div>'
+    +'<div style="background:rgba(255,255,255,.04);border-radius:6px;padding:7px;"><div style="color:#64748b;">HAZMAT</div><div style="color:#ff3333;font-weight:700;">'+hazmat+'</div></div>'
+    +'</div></div>';
+}
+
+// ══ SOLICITUDES ══
+async function loadSolicitudes(){
+  var estado=_v('sol-filter-estado');
+  var r=await dbQ(function(d){var q=d.from('lab_solicitudes').select('*').order('created_at',{ascending:false});if(estado)q=q.eq('estado',estado);return q;});
+  SOLICITUDES=(r.data&&r.data.length)?r.data:SIM_SOL;
+  if(estado)SOLICITUDES=SOLICITUDES.filter(function(s){return s.estado===estado;});
+  var upMapObj=upMap();
+  var panelMap={};PANELES.forEach(function(p){panelMap[p.panel_id]=p.nombre;});
+  document.getElementById('solicitudes-tbody').innerHTML=SOLICITUDES.map(function(s){
+    var up=upMapObj[s.unidad_id]||{};
+    var color=s.resultado_general==='Óptimo'?'#4ade80':s.resultado_general==='Aceptable'?'#fbbf24':s.resultado_general==='Crítico'?'#f87171':s.bloquea_lote?'#ff3333':'#94a3b8';
+    var firmas=(s.firmado_analista?'<span style="color:#4ade80;font-size:11px;">A✓</span>':' <span style="color:#64748b;font-size:11px;">A○</span>')
+              +(s.firmado_supervisor?'<span style="color:#60a5fa;font-size:11px;">S✓</span>':' <span style="color:#64748b;font-size:11px;">S○</span>');
+    var notif=(s.notificado_agricola?'🌿':'')+( s.notificado_agroindustria?'🏭':'')+( s.notificado_propietario?'💼':'');
+    var zona=s.zona_cultivo_id?s.zona_cultivo_id.split('-').slice(-2).join('-'):'—';
+    return '<tr style="'+(s.bloquea_lote?'background:rgba(255,51,51,.05);':'')+'">'
+      +'<td><span class="brand" style="color:#00d44c;font-weight:700;font-size:11px;">'+s.numero_muestra+'</span>'+(s.bloquea_lote?'<span class="badge badge-hazmat" style="margin-left:5px;">☣️ BLOQ</span>':'')+'</td>'
+      +'<td class="brand" style="color:#60a5fa;font-weight:700;">'+(up.codigo||'—')+'</td>'
+      +'<td style="font-size:10px;color:#94a3b8;">'+zona+'</td>'
+      +'<td style="font-size:10px;">'+(panelMap[s.panel_id]||s.panel_id||'—')+'</td>'
+      +'<td><span class="badge badge-gray" style="font-size:9px;">'+s.muestra_tipo+'</span></td>'
+      +'<td style="font-size:11px;">'+s.fecha_toma_muestra+'</td>'
+      +'<td>'+(s.prioridad==='Urgente'?'<span class="badge badge-crit">🚨 Urgente</span>':s.prioridad==='Alta'?'<span class="badge badge-warn">Alta</span>':'<span class="badge badge-gray">'+s.prioridad+'</span>')+'</td>'
+      +'<td style="font-size:10px;color:#64748b;">'+((s.estado==='Completada'||s.estado==='Validada')?'✅ Done':'⏱ Pend.')+'</td>'
+      +'<td>'+estadoBadge(s.estado)+'</td>'
+      +'<td style="font-weight:700;color:'+color+';">'+(s.indice_salud!==null?s.indice_salud+'%':'—')+'</td>'
+      +'<td style="font-size:11px;">'+firmas+'</td>'
+      +'<td><div style="display:flex;gap:4px;">'
+      +'<button class="btn-sm btn-outline" style="font-size:9px;padding:3px 7px;" onclick="abrirReporte(\''+s.solicitud_id+'\')">📄</button>'
+      +(canSign()&&!s.firmado_analista?'<button class="btn-sm btn-primary" style="font-size:9px;padding:3px 7px;" onclick="firmarMuestra(\''+s.solicitud_id+'\',\'analista\')">✍️</button>':'')
+      +'</div></td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('nav-sol-lbl').textContent='Solicitudes ('+SOLICITUDES.length+')';
+}
+
+// ══ NUEVA ══
+function loadNueva(){
+  var d=document.getElementById('n-fecha');if(d&&!d.value)d.value=new Date().toISOString().split('T')[0];
+  renderPanelesSelector(PANELES);
+}
+
+async function saveSolicitud(){
+  var up_id=_v('n-up');if(!up_id){showToast('⚠ Selecciona la UP de origen','#ef4444');return;}
+  if(!_selectedPanel){showToast('⚠ Selecciona un panel de análisis','#ef4444');return;}
+  var tomador=_v('n-tomador');if(!tomador){showToast('⚠ Indica quién tomó la muestra','#ef4444');return;}
+  var nMuestra='LAB-'+new Date().getFullYear()+'-'+String(SOLICITUDES.length+1).padStart(5,'0');
+  var data=_clean({solicitud_id:nMuestra,numero_muestra:nMuestra,unidad_id:up_id,nave_id:up_id,zona_cultivo_id:_v('n-zona')||null,panel_id:_selectedPanel.panel_id,tipo_analisis:_selectedPanel.tipo_analisis,muestra_tipo:_v('n-tipo-muestra'),fecha_toma_muestra:_v('n-fecha')||new Date().toISOString().split('T')[0],hora_toma_muestra:_v('n-hora')||null,punto_muestreo:_v('n-punto')||null,ph_campo:_n('n-ph'),ec_campo:_n('n-ec'),temperatura_muestra:_n('n-temp'),volumen_ml:_n('n-volumen'),cultivo_referencia:_v('n-cultivo')||null,etapa_cultivo:_v('n-etapa'),tomado_por:tomador,recibido_por:me&&me.nombre||'Lab CAIA',fecha_recepcion:new Date().toISOString(),condiciones_toma:_v('n-condiciones')||null,notas:_v('n-notas')||null,estado:'Recibida',prioridad:_v('n-prioridad'),costo_analisis:_selectedPanel.costo_base,firmado_analista:false,firmado_supervisor:false,bloquea_lote:false,tenant_id:'hidroexpo'});
+  var r=await dbQ(function(d){return d.from('lab_solicitudes').insert(data).select().single();});
+  if(!r.error&&r.data){SOLICITUDES.unshift(r.data);}else{SIM_SOL.unshift(Object.assign(data,{resultado_general:null,indice_salud:null}));SOLICITUDES=SIM_SOL;}
+  showToast('✅ Muestra '+nMuestra+' registrada · QR generado');
+  // Show QR modal
+  setTimeout(function(){_selectedSolicitud=data;abrirReporte(nMuestra);},500);
+  go('solicitudes');
+}
+
+// ══ RESULTADOS TAB ══
+function loadResultadosTab(){
+  var sel=document.getElementById('res-solicitud');if(!sel)return;
+  var activas=SOLICITUDES.filter(function(s){return s.estado==='Recibida'||s.estado==='En_Análisis'||s.estado==='Completada';});
+  sel.innerHTML='<option value="">— Seleccionar muestra activa —</option>'+activas.map(function(s){return '<option value="'+s.solicitud_id+'">'+s.numero_muestra+' · '+s.tipo_analisis+' · '+(upMap()[s.unidad_id]||{codigo:'—'}).codigo+' ['+s.estado+']</option>';}).join('');
+}
+
+async function loadParamsForSolicitud(solId){
+  if(!solId){document.getElementById('res-form').style.display='none';return;}
+  var sol=SOLICITUDES.find(function(s){return s.solicitud_id===solId;});if(!sol)return;
+  var r=await dbQ(function(d){return d.from('lab_parametros').select('*').eq('panel_id',sol.panel_id).eq('activo',true).order('orden_reporte');});
+  var params=r.data&&r.data.length?r.data:getSimParams(sol.panel_id);
+  var upName=(upMap()[sol.unidad_id]||{codigo:'—'}).codigo;
+  var form=document.getElementById('res-form');form.style.display='block';
+  form.innerHTML='<div class="card">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+    +'<div><div class="brand" style="font-size:13px;font-weight:800;color:#e2e8f0;">'+sol.numero_muestra+' · '+sol.tipo_analisis+'</div>'
+    +'<div style="font-size:11px;color:#64748b;">'+upName+' · '+sol.fecha_toma_muestra+' · '+sol.muestra_tipo+'</div></div>'
+    +estadoBadge(sol.estado)+'</div>'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#94a3b8;">'
+    +'🔬 Ingresa el valor medido para cada parámetro. El sistema validará automáticamente contra los límites del panel <b style="color:#00d44c;">'+sol.panel_id+'</b>. Los parámetros fuera de rango crítico generan alerta automática.</div>'
+    +'<table class="tbl"><thead><tr><th>Parámetro</th><th>Método</th><th>Unidad</th><th>Rango Óptimo</th><th>Valor Medido</th><th>Estado Auto</th><th>Observación</th></tr></thead><tbody>'
+    +params.map(function(p){
+      var optStr=(p.valor_min_optimo!=null&&p.valor_max_optimo!=null)?p.valor_min_optimo+' – '+p.valor_max_optimo:'Cualitativo';
+      var isCual=!p.valor_min_optimo&&!p.valor_max_optimo;
+      return '<tr id="prow-'+p.parametro_id+'">'
+        +'<td><div style="font-size:11px;font-weight:700;color:#e2e8f0;">'+p.nombre+'</div><div style="font-size:9px;color:#64748b;">'+(p.nombre_tecnico||'')+'</div></td>'
+        +'<td style="font-size:10px;color:#94a3b8;">'+(p.metodo_analisis||'—')+'</td>'
+        +'<td style="font-size:10px;color:#60a5fa;">'+p.unidad+'</td>'
+        +'<td style="font-size:10px;color:#4ade80;">'+optStr+'</td>'
+        +'<td style="min-width:110px;">'
+        +(isCual
+          ?'<select id="val-'+p.parametro_id+'" onchange="evaluarParam(\''+p.parametro_id+'\',\''+solId+'\')" style="font-size:10px;padding:4px 8px;"><option value="">—</option><option value="Ausente">Ausente ✅</option><option value="Detectada">Detectada ⚠️</option><option value="Presente">Presente 🚨</option></select>'
+          :'<input type="number" id="val-'+p.parametro_id+'" step="0.001" placeholder="—" onchange="evaluarParam(\''+p.parametro_id+'\',\''+solId+'\')" style="font-size:11px;padding:4px 8px;width:90px;">'
+        )+'</td>'
+        +'<td id="eval-'+p.parametro_id+'"><span style="color:#64748b;font-size:10px;">Pendiente</span></td>'
+        +'<td><input type="text" id="obs-'+p.parametro_id+'" placeholder="—" style="font-size:10px;padding:3px 8px;"></td>'
+        +'</tr>';
+    }).join('')+'</tbody></table>'
+    +'<div style="display:flex;gap:8px;margin-top:14px;">'
+    +'<button class="btn-primary" onclick="saveResultados(\''+solId+'\',\''+sol.panel_id+'\')">💾 Guardar Resultados</button>'
+    +'<button class="btn-outline" onclick="document.getElementById(\'res-form\').style.display=\'none\'">Cancelar</button>'
+    +'</div></div>';
+}
+
+function getSimParams(panelId){
+  var m={
+    'PAN-SOL-NFT':[{parametro_id:'PAR-SOL-PH',nombre:'pH Solución',nombre_tecnico:'pH',unidad:'pH',metodo_analisis:'Potenciometría',valor_min_optimo:5.5,valor_max_optimo:6.5,valor_min_critico:4.5,valor_max_critico:7.5},{parametro_id:'PAR-SOL-CE',nombre:'CE Solución',nombre_tecnico:'Conductividad',unidad:'mS/cm',metodo_analisis:'Conductimetría',valor_min_optimo:1.2,valor_max_optimo:2.5,valor_min_critico:0.5,valor_max_critico:4.0},{parametro_id:'PAR-SOL-N',nombre:'Nitrógeno Total',nombre_tecnico:'N-Total',unidad:'mg/L',metodo_analisis:'Kjeldahl',valor_min_optimo:100,valor_max_optimo:250,valor_min_critico:50,valor_max_critico:400},{parametro_id:'PAR-SOL-K',nombre:'Potasio (K)',nombre_tecnico:'K',unidad:'mg/L',metodo_analisis:'ICP-OES',valor_min_optimo:150,valor_max_optimo:350,valor_min_critico:50,valor_max_critico:500},{parametro_id:'PAR-SOL-CA',nombre:'Calcio (Ca)',nombre_tecnico:'Ca',unidad:'mg/L',metodo_analisis:'ICP-OES',valor_min_optimo:80,valor_max_optimo:200,valor_min_critico:30,valor_max_critico:400}],
+    'PAN-AGUA-BASICO':[{parametro_id:'PAR-PH',nombre:'pH del Agua',nombre_tecnico:'pH',unidad:'pH',metodo_analisis:'Potenciometría',valor_min_optimo:5.5,valor_max_optimo:7.0,valor_min_critico:4.0,valor_max_critico:8.5},{parametro_id:'PAR-CE',nombre:'Conductividad Eléctrica',nombre_tecnico:'CE',unidad:'μS/cm',metodo_analisis:'Conductimetría',valor_min_optimo:100,valor_max_optimo:800,valor_min_critico:50,valor_max_critico:2000},{parametro_id:'PAR-NO3',nombre:'Nitratos (NO₃)',nombre_tecnico:'Nitratos',unidad:'mg/L',metodo_analisis:'Espectrofotometría',valor_min_optimo:50,valor_max_optimo:200,valor_min_critico:0,valor_max_critico:500}],
+    'PAN-MICRO':[{parametro_id:'PAR-MIC-CT',nombre:'Coliformes Totales',nombre_tecnico:'Col-Total',unidad:'NMP/100mL',metodo_analisis:'MPN',valor_min_optimo:0,valor_max_optimo:0,valor_min_critico:0,valor_max_critico:10},{parametro_id:'PAR-MIC-CF',nombre:'E. coli (Fecal)',nombre_tecnico:'E-coli',unidad:'NMP/100mL',metodo_analisis:'MPN',valor_min_optimo:0,valor_max_optimo:0,valor_min_critico:null,valor_max_critico:0},{parametro_id:'PAR-MIC-SAL',nombre:'Salmonella spp.',nombre_tecnico:'Salmonella',unidad:'Presencia',metodo_analisis:'PCR',valor_min_optimo:null,valor_max_optimo:null,valor_min_critico:null,valor_max_critico:null},{parametro_id:'PAR-MIC-LIS',nombre:'Listeria monocytogenes',nombre_tecnico:'Listeria',unidad:'Presencia',metodo_analisis:'PCR/ELISA',valor_min_optimo:null,valor_max_optimo:null,valor_min_critico:null,valor_max_critico:null}],
+    'PAN-FITO':[{parametro_id:'PAR-FITO-PYT',nombre:'Phytophthora spp.',nombre_tecnico:'Phytophthora',unidad:'Presencia',metodo_analisis:'PCR',valor_min_optimo:null,valor_max_optimo:null},{parametro_id:'PAR-FITO-FUS',nombre:'Fusarium oxysporum',nombre_tecnico:'Fusarium',unidad:'Presencia',metodo_analisis:'PCR/Cultivo',valor_min_optimo:null,valor_max_optimo:null},{parametro_id:'PAR-FITO-VIR',nombre:'Virus ToBRFV / TSWV',nombre_tecnico:'Virus',unidad:'Presencia',metodo_analisis:'ELISA/RT-PCR',valor_min_optimo:null,valor_max_optimo:null}],
+    'PAN-AMBIENTAL':[{parametro_id:'PAR-AMB-CO2',nombre:'CO₂ Ambiente',nombre_tecnico:'CO2',unidad:'ppm',metodo_analisis:'NDIR',valor_min_optimo:400,valor_max_optimo:1200,valor_min_critico:300,valor_max_critico:2000},{parametro_id:'PAR-AMB-TMP',nombre:'Temperatura Aire',nombre_tecnico:'Temp',unidad:'°C',metodo_analisis:'Termohigrómetro',valor_min_optimo:18,valor_max_optimo:28,valor_min_critico:10,valor_max_critico:35},{parametro_id:'PAR-AMB-HUM',nombre:'Humedad Relativa',nombre_tecnico:'HR',unidad:'%',metodo_analisis:'Termohigrómetro',valor_min_optimo:50,valor_max_optimo:80,valor_min_critico:30,valor_max_critico:90}],
+    'PAN-SALUD-VEG':[{parametro_id:'PAR-VEG-SPAD',nombre:'Índice SPAD (Clorofila)',nombre_tecnico:'SPAD',unidad:'SPAD',metodo_analisis:'SPAD-metro',valor_min_optimo:40,valor_max_optimo:60,valor_min_critico:20,valor_max_critico:70},{parametro_id:'PAR-VEG-NDV',nombre:'NDVI',nombre_tecnico:'NDVI',unidad:'índice',metodo_analisis:'Espectro',valor_min_optimo:0.6,valor_max_optimo:0.9,valor_min_critico:0.3,valor_max_critico:1.0}]
+  };
+  return m[panelId]||[];
+}
+
+function evaluarParam(paramId,solId){
+  var el=document.getElementById('val-'+paramId);var evalEl=document.getElementById('eval-'+paramId);
+  if(!el||!evalEl)return;
+  var val=el.value;
+  if(!val||val===''){evalEl.innerHTML='<span style="color:#64748b;font-size:10px;">Pendiente</span>';return;}
+  // Qualitative
+  if(['Ausente','Detectada','Presente'].includes(val)){
+    var isPatho=paramId.includes('MIC-SAL')||paramId.includes('MIC-LIS')||paramId.includes('FITO');
+    if(val==='Ausente'){evalEl.innerHTML='<span class="val-ok">✅ OK</span>';}
+    else if(val==='Detectada'&&isPatho){evalEl.innerHTML='<span class="val-hazmat">☣️ HAZMAT</span>';showToast('☣️ PATÓGENO DETECTADO en '+paramId+' — Activando bloqueo','#ff3333');}
+    else if(val==='Presente'){evalEl.innerHTML='<span class="val-crit">🚨 PRESENTE</span>';}
+    return;
+  }
+  evalEl.innerHTML='<span class="val-ok">✅ OK</span>';
+}
+
+async function saveResultados(solId,panelId){
+  var params=getSimParams(panelId);
+  var results=[];var hasCrit=false;var hasHazmat=false;
+  params.forEach(function(p){
+    var el=document.getElementById('val-'+p.parametro_id);if(!el||!el.value)return;
+    var val=el.value;var obs=document.getElementById('obs-'+p.parametro_id);
+    var isNum=!isNaN(parseFloat(val));
+    var fora=false,forc=false,nivel='Normal';
+    if(isNum){
+      var n=parseFloat(val);
+      if(p.valor_min_optimo!=null&&p.valor_max_optimo!=null){fora=n<p.valor_min_optimo||n>p.valor_max_optimo;}
+      if(p.valor_min_critico!=null&&p.valor_max_critico!=null){forc=n<p.valor_min_critico||n>p.valor_max_critico;}
+      nivel=forc?'Crítico':fora?'Fuera_Rango':'Normal';
+    } else {
+      if(val==='Detectada'||val==='Presente'){forc=true;nivel='HAZMAT';hasHazmat=true;}
+    }
+    if(forc)hasCrit=true;
+    results.push(_clean({solicitud_id:solId,parametro_id:p.parametro_id,valor_numerico:isNum?parseFloat(val):null,valor_texto:isNum?null:val,unidad:p.unidad,fuera_rango_optimo:fora,fuera_rango_critico:forc,nivel_alerta:nivel,recomendacion_corta:(obs&&obs.value)||null,analista:me&&me.nombre||'Analista',tenant_id:'hidroexpo'}));
+  });
+  if(results.length===0){showToast('⚠ Ingresa al menos un valor','#ef4444');return;}
+  var r=await dbQ(function(d){return d.from('lab_resultados').insert(results);});
+  // Update solicitud estado
+  var nuevoEstado=hasCrit?'Completada':'Completada';
+  var nuevoIdx=Math.round((results.filter(function(x){return!x.fuera_rango_optimo;}).length/results.length)*100);
+  await dbQ(function(d){return d.from('lab_solicitudes').update({estado:nuevoEstado,indice_salud:nuevoIdx,resultado_general:nuevoIdx>=90?'Óptimo':nuevoIdx>=70?'Aceptable':nuevoIdx>=50?'Deficiente':'Crítico',bloquea_lote:hasHazmat,bloquea_cosecha:hasHazmat,fecha_resultado:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('solicitud_id',solId);});
+  if(hasHazmat){
+    checkHazmat();
+    var solObj=SOLICITUDES.find(function(s){return s.solicitud_id===solId;})||{solicitud_id:solId,unidad_id:'?',tipo_analisis:'Microbiologico',numero_muestra:solId};
+    await notificarModulos(solObj,'hazmat');
+    await pushToWarRoom(solObj,'hazmat');
+    showToast('☣️ HAZMAT — Patógeno detectado. NC generada en Agrícola. Agroindustria bloqueada.','#ff3333');
+  } else {
+    showToast('✅ '+results.length+' resultados guardados · Índice '+nuevoIdx+'%');
+  }
+  var s=SOLICITUDES.find(function(x){return x.solicitud_id===solId;});
+  if(s){s.estado=nuevoEstado;s.indice_salud=nuevoIdx;s.bloquea_lote=hasHazmat;}
+  document.getElementById('res-form').style.display='none';
+}
+
+// ══ FIRMAS ══
+async function loadFirmas(){
+  var pending=SOLICITUDES.filter(function(s){return (s.estado==='Completada'||s.estado==='Validada')&&!s.firmado_supervisor;});
+  var upMapObj=upMap();
+  document.getElementById('firmas-list').innerHTML=pending.length?pending.map(function(s){
+    var up=upMapObj[s.unidad_id]||{};
+    var ic=s.indice_salud>=90?'#4ade80':s.indice_salud>=70?'#fbbf24':'#f87171';
+    return '<div class="card" style="margin-bottom:11px;border-left:3px solid rgba(0,212,76,.3);">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
+      +'<div><div class="brand" style="font-size:14px;font-weight:800;color:#e2e8f0;">'+s.numero_muestra+'</div>'
+      +'<div style="font-size:11px;color:#64748b;">'+(up.codigo||'—')+' · '+s.tipo_analisis+' · '+s.fecha_toma_muestra+'</div></div>'
+      +'<div style="text-align:right;">'+(s.indice_salud!=null?'<div class="brand" style="font-size:20px;font-weight:800;color:'+ic+';">'+s.indice_salud+'%</div>':'')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
+      +'<div class="firma-badge" style="background:'+(s.firmado_analista?'rgba(34,197,94,.1)':'rgba(255,255,255,.04)')+';border:1px solid '+(s.firmado_analista?'rgba(34,197,94,.2)':'rgba(255,255,255,.07)')+';color:'+(s.firmado_analista?'#4ade80':'#64748b')+';">🔬 Analista '+(s.firmado_analista?'✓ Firmado':'○ Pendiente')+'</div>'
+      +'<div class="firma-badge" style="background:'+(s.firmado_supervisor?'rgba(59,130,246,.1)':'rgba(255,255,255,.04)')+';border:1px solid '+(s.firmado_supervisor?'rgba(59,130,246,.2)':'rgba(255,255,255,.07)')+';color:'+(s.firmado_supervisor?'#60a5fa':'#64748b')+';">👤 Supervisor '+(s.firmado_supervisor?'✓ Firmado':'○ Pendiente')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:7px;flex-wrap:wrap;">'
+      +(canSign()&&!s.firmado_analista?'<button class="btn-primary" style="font-size:11px;padding:6px 12px;" onclick="firmarMuestra(\''+s.solicitud_id+'\',\'analista\')">✍️ Firmar como Analista</button>':'')
+      +(canSign()&&s.firmado_analista&&!s.firmado_supervisor?'<button class="btn-blue" style="font-size:11px;padding:6px 12px;" onclick="firmarMuestra(\''+s.solicitud_id+'\',\'supervisor\')">✅ Firmar como Supervisor</button>':'')
+      +'<button class="btn-outline" style="font-size:11px;padding:5px 11px;" onclick="abrirReporte(\''+s.solicitud_id+'\')">📄 Ver Reporte</button>'
+      +'</div>'
+      +'</div>';
+  }).join(''):'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:36px;margin-bottom:10px;">✅</div><div style="color:#4ade80;font-weight:700;">Todas las muestras están al día en firmas.</div></div>';
+}
+
+async function firmarMuestra(solId,tipo){
+  if(!canSign()){showToast('⚠ Sin permiso para firmar','#ef4444');return;}
+  var data=tipo==='analista'
+    ? {firmado_analista:true, updated_at:new Date().toISOString()}
+    : {firmado_supervisor:true, estado:'Validada', fecha_validacion:new Date().toISOString(), validado_por:me&&me.nombre||'—', updated_at:new Date().toISOString()};
+  await dbQ(function(d){return d.from('lab_solicitudes').update(data).eq('solicitud_id',solId);});
+  var s=SOLICITUDES.find(function(x){return x.solicitud_id===solId;});
+  if(s) Object.assign(s, data);
+  showToast('✍️ Firma '+tipo+' registrada — '+(me&&me.nombre||'—'));
+  // Firma supervisor = reporte validado → notificar todos los módulos
+  if(tipo==='supervisor' && s){
+    if(s.bloquea_lote){
+      await notificarModulos(s,'hazmat');
+      await pushToWarRoom(s,'hazmat');
+    } else {
+      await notificarModulos(s,'aprobado');
+      await pushToWarRoom(s,'aprobado');
+    }
+    // Mostrar modal de distribución
+    setTimeout(function(){ mostrarModalDistribucion(s); }, 400);
+  }
+  loadFirmas(); loadSolicitudes();
+}
+
+// ══ REPORTES ══
+function loadReportes(){
+  var upMapObj=upMap();
+  document.getElementById('reportes-tbody').innerHTML=SOLICITUDES.filter(function(s){return s.estado==='Completada'||s.estado==='Validada';}).map(function(s){
+    var up=upMapObj[s.unidad_id]||{};
+    var ic=s.indice_salud!=null?(s.indice_salud>=90?'<span class="val-ok">'+s.indice_salud+'%</span>':s.indice_salud>=70?'<span class="val-warn">'+s.indice_salud+'%</span>':'<span class="val-crit">'+s.indice_salud+'%</span>'):'—';
+    var firmas=(s.firmado_analista?'✅ A':'○ A')+' '+(s.firmado_supervisor?'✅ S':'○ S');
+    var notif=(s.notificado_agricola?'🌿':'○')+' '+(s.notificado_agroindustria?'🏭':'○')+' '+(s.notificado_propietario?'💼':'○');
+    return '<tr>'
+      +'<td class="brand" style="color:#00d44c;font-size:11px;">'+s.numero_muestra+'</td>'
+      +'<td style="color:#60a5fa;font-weight:700;">'+(up.codigo||'—')+'</td>'
+      +'<td style="font-size:10px;">'+(s.panel_id||'—')+'</td>'
+      +'<td style="font-size:11px;">'+s.fecha_toma_muestra+'</td>'
+      +'<td>'+ic+'</td>'
+      +'<td>'+(s.resultado_general?'<span class="badge '+(s.resultado_general==='Óptimo'?'badge-ok':s.resultado_general==='Aceptable'?'badge-warn':'badge-crit')+'">'+s.resultado_general+'</span>':'—')+'</td>'
+      +'<td style="font-size:11px;color:#64748b;">'+firmas+'</td>'
+      +'<td style="font-size:11px;">'+notif+'</td>'
+      +'<td><button class="btn-sm btn-outline" style="font-size:9px;padding:3px 7px;" onclick="abrirReporte(\''+s.solicitud_id+'\')">📄 PDF/QR</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function abrirReporte(solId){
+  var s=SOLICITUDES.find(function(x){return x.solicitud_id===solId;});if(!s)return;
+  _currentReporteSol=s;
+  var upMapObj=upMap();var up=upMapObj[s.unidad_id]||{};
+  var ic=s.indice_salud!=null?s.indice_salud:null;
+  var color=ic!=null?(ic>=90?'#4ade80':ic>=70?'#fbbf24':'#f87171'):'#94a3b8';
+  var html='<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;">'
+    +'<div>'
+    +'<div style="background:rgba(0,212,76,.07);border:1px solid rgba(0,212,76,.18);border-radius:10px;padding:14px;margin-bottom:12px;">'
+    +'<div style="font-size:11px;font-weight:700;color:#00d44c;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">Certificado de Análisis — CAIA Lab</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">'
+    +'<div><span style="color:#64748b;">Muestra:</span> <b>'+s.numero_muestra+'</b></div>'
+    +'<div><span style="color:#64748b;">Zona:</span> <b style="color:#60a5fa;">'+(up.codigo||'—')+'</b></div>'
+    +'<div><span style="color:#64748b;">Panel:</span> <b>'+s.panel_id+'</b></div>'
+    +'<div><span style="color:#64748b;">Tipo:</span> <b>'+s.muestra_tipo+'</b></div>'
+    +'<div><span style="color:#64748b;">Cultivo:</span> <b>'+(s.cultivo_referencia||'—')+'</b></div>'
+    +'<div><span style="color:#64748b;">Etapa:</span> <b>'+(s.etapa_cultivo||'—')+'</b></div>'
+    +'<div><span style="color:#64748b;">Fecha:</span> <b>'+s.fecha_toma_muestra+'</b></div>'
+    +'<div><span style="color:#64748b;">Tomado por:</span> <b>'+(s.tomado_por||'—')+'</b></div>'
+    +(s.punto_muestreo?'<div style="grid-column:span 2;"><span style="color:#64748b;">Punto:</span> <b>'+s.punto_muestreo+'</b></div>':'')
+    +'</div></div>'
+    +(ic!=null?'<div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.04);border-radius:8px;padding:12px;">'
+      +'<div class="brand" style="font-size:42px;font-weight:800;color:'+color+';">'+ic+'</div>'
+      +'<div><div style="font-size:13px;font-weight:700;color:'+color+';">'+(s.resultado_general||'—')+'</div>'
+      +'<div style="font-size:11px;color:#64748b;">Índice de Salud / 100</div>'
+      +(s.bloquea_lote?'<div class="badge badge-hazmat" style="margin-top:5px;">☣️ LOTE BLOQUEADO</div>':'')
+      +'</div></div>':'')
+    +'<div style="margin-top:12px;"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;">Firmas Digitales</div>'
+    +'<div style="display:flex;gap:10px;">'
+    +'<div style="flex:1;background:rgba(255,255,255,.04);border-radius:7px;padding:8px;text-align:center;">'
+    +'<div style="font-size:18px;">'+(s.firmado_analista?'✅':'🕐')+'</div>'
+    +'<div style="font-size:10px;color:#64748b;margin-top:3px;">Analista</div></div>'
+    +'<div style="flex:1;background:rgba(255,255,255,.04);border-radius:7px;padding:8px;text-align:center;">'
+    +'<div style="font-size:18px;">'+(s.firmado_supervisor?'✅':'🕐')+'</div>'
+    +'<div style="font-size:10px;color:#64748b;margin-top:3px;">Supervisor</div></div>'
+    +'</div></div>'
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">'
+    +'<div class="qr-box">'
+    +'<svg width="130" height="130" viewBox="0 0 130 130">'
+    +'<rect width="130" height="130" fill="white"/>'
+    +'<rect x="8" y="8" width="46" height="46" fill="none" stroke="#000" stroke-width="4"/>'
+    +'<rect x="17" y="17" width="10" height="10" fill="#000"/><rect x="30" y="17" width="10" height="10" fill="#000"/>'
+    +'<rect x="17" y="30" width="10" height="10" fill="#000"/>'
+    +'<rect x="76" y="8" width="46" height="46" fill="none" stroke="#000" stroke-width="4"/>'
+    +'<rect x="85" y="17" width="10" height="10" fill="#000"/><rect x="98" y="17" width="10" height="10" fill="#000"/>'
+    +'<rect x="85" y="30" width="10" height="10" fill="#000"/>'
+    +'<rect x="8" y="76" width="46" height="46" fill="none" stroke="#000" stroke-width="4"/>'
+    +'<rect x="17" y="85" width="10" height="10" fill="#000"/><rect x="30" y="85" width="10" height="10" fill="#000"/>'
+    +'<rect x="17" y="98" width="10" height="10" fill="#000"/>'
+    +'<rect x="65" y="65" width="5" height="5" fill="#000"/><rect x="74" y="65" width="5" height="5" fill="#000"/>'
+    +'<rect x="83" y="65" width="5" height="5" fill="#000"/><rect x="65" y="74" width="5" height="5" fill="#000"/>'
+    +'<rect x="80" y="74" width="5" height="5" fill="#000"/><rect x="65" y="83" width="5" height="5" fill="#000"/>'
+    +'<rect x="74" y="83" width="5" height="5" fill="#000"/><rect x="90" y="83" width="5" height="5" fill="#000"/>'
+    +'<text x="65" y="120" text-anchor="middle" font-size="7" font-family="monospace" fill="#000">'+s.numero_muestra.slice(-10)+'</text>'
+    +'</svg></div>'
+    +'<div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:8px;">QR Trazabilidad<br>CAIA Lab · iAGRI</div>'
+    +'<div style="font-size:9px;color:#475569;margin-top:6px;font-family:monospace;background:rgba(255,255,255,.04);border-radius:5px;padding:4px 8px;">HASH: 0x'+Math.random().toString(16).slice(2,12).toUpperCase()+'</div>'
+    +'<div style="margin-top:14px;font-size:9px;color:#64748b;text-align:center;line-height:1.6;">'
+    +'ISO 17025 · ISO 22000<br>GlobalGAP · FDA FSMA<br>CAIA — Centro de Análisis iAGRI</div>'
+    +'</div>'
+    +'</div>';
+  document.getElementById('modal-reporte-content').innerHTML=html;
+  document.getElementById('modal-reporte').style.display='flex';
+}
+
+async function distribuirReporte(){
+  if(!_selectedSolicitud && !_currentReporteSol){showToast('Sin reporte seleccionado','#ef4444');return;}
+  var sol=_currentReporteSol||_selectedSolicitud;
+  await notificarModulos(sol,'aprobado');
+  await pushToWarRoom(sol,'aprobado');
+  document.getElementById('modal-reporte').style.display='none';
+  mostrarModalDistribucion(sol);
+}
+
+var _currentReporteSol=null;
+
+function mostrarModalDistribucion(sol){
+  var up=(upMap()[sol.unidad_id]||{codigo:sol.unidad_id});
+  var esHazmat=sol.bloquea_lote||sol.bloquea_cosecha;
+  var html='<div style="text-align:center;padding:10px 0 16px;">'
+    +'<div style="font-size:40px;margin-bottom:8px;">'+(esHazmat?'☣️':'✅')+'</div>'
+    +'<div class="brand" style="font-size:16px;font-weight:800;color:'+(esHazmat?'#ff3333':'#4ade80')+';">'
+    +(esHazmat?'ALERTA HAZMAT DISTRIBUIDA':'Reporte Distribuido Exitosamente')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-top:4px;">'+sol.numero_muestra+' · '+up.codigo+'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'
+    +[
+      {icon:'🌿',label:'ia²grícola',desc:esHazmat?'NC Crítica generada. Lote bloqueado en cuaderno.':'Cuaderno actualizado con resultado. TAT registrado.',color:'#4ade80',url:'https://www.agricola.iagri.pro'},
+      {icon:'🏭',label:'Agroindustria',desc:esHazmat?'BLOQUEO ACTIVO — Recepción de materia prima suspendida.':'Certificado de inocuidad enviado. Recepción habilitada.',color:esHazmat?'#f87171':'#60a5fa',url:'https://www.agroindustria.iagri.pro'},
+      {icon:'💼',label:'Propietario / Socio',desc:'Notificación push enviada. Índice: '+(sol.indice_salud||'—')+'%. '+( sol.resultado_general||'Pendiente')+'.',color:'#c084fc',url:null},
+      {icon:'📊',label:'Mando Central (War Room)',desc:'Evento registrado en War Room. Disponible en AGROSENSe Dashboard.',color:'#fbbf24',url:null}
+    ].map(function(m){
+      return '<div style="background:rgba(255,255,255,.03);border:1px solid '+m.color+'30;border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:5px;">'
+        +'<div style="display:flex;align-items:center;gap:7px;"><span style="font-size:20px;">'+m.icon+'</span><b style="color:'+m.color+';font-size:12px;">'+m.label+'</b></div>'
+        +'<div style="font-size:10px;color:#94a3b8;line-height:1.5;">'+m.desc+'</div>'
+        +(m.url?'<a href="'+m.url+'" target="_blank" style="font-size:10px;color:'+m.color+';text-decoration:none;margin-top:3px;">→ Abrir módulo</a>':'')
+        +'</div>';
+    }).join('')
+    +'</div>'
+    +(esHazmat?'<div style="background:rgba(255,51,51,.1);border:1px solid rgba(255,51,51,.3);border-radius:8px;padding:10px 12px;font-size:11px;color:#ff3333;font-weight:700;">⚠️ Acciones requeridas: Desinfección · Cuarentena · Informe a Yanilka (Inocuidad) · Informe a Santiago (COO)</div>':'')
+    +'<div style="display:flex;justify-content:center;margin-top:14px;">'
+    +'<button class="btn-primary" onclick="document.getElementById(\'modal-distrib\').style.display=\'none\'">Cerrar</button>'
+    +'</div>';
+  document.getElementById('modal-distrib-content').innerHTML=html;
+  document.getElementById('modal-distrib').style.display='flex';
+}
+
+// ══ TENDENCIAS ══
+function loadTendencias(){
+  var upMapObj=upMap();
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">';
+  // Group by unidad
+  var grouped={};
+  SOLICITUDES.filter(function(s){return s.indice_salud!=null;}).forEach(function(s){
+    if(!grouped[s.unidad_id])grouped[s.unidad_id]=[];
+    grouped[s.unidad_id].push(s);
+  });
+  Object.keys(grouped).forEach(function(uid){
+    var list=grouped[uid];var up=upMapObj[uid]||{};
+    var avg=Math.round(list.reduce(function(a,b){return a+(b.indice_salud||0);},0)/list.length);
+    var c=avg>=90?'#4ade80':avg>=70?'#fbbf24':'#f87171';
+    html+='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+      +'<div><div class="brand" style="font-size:13px;font-weight:700;color:#e2e8f0;">'+(up.codigo||uid)+'</div>'
+      +'<div style="font-size:10px;color:#64748b;">'+(up.cultivo_actual||'—')+' · '+list.length+' análisis</div></div>'
+      +'<div class="brand" style="font-size:20px;font-weight:800;color:'+c+';">'+avg+'%</div></div>'
+      +'<div class="trend-bar">'
+      +list.map(function(s){var h=Math.round((s.indice_salud/100)*32);var tc=s.indice_salud>=90?'var(--green)':s.indice_salud>=70?'var(--amber)':'var(--red)';return '<div class="trend-col" style="height:'+h+'px;background:'+tc+';flex:1;" title="'+s.numero_muestra+': '+s.indice_salud+'%"></div>';}).join('')
+      +'</div>'
+      +'<div style="display:flex;gap:8px;margin-top:8px;">'
+      +list.map(function(s){return '<span style="font-size:9px;color:#64748b;">'+s.numero_muestra.slice(-5)+'</span>';}).join('')
+      +'</div></div>';
+  });
+  html+='</div>';
+  document.getElementById('tendencias-content').innerHTML=html||'<div class="card" style="text-align:center;padding:24px;color:#64748b;">Sin datos de tendencias disponibles.</div>';
+}
+
+// ══ RECOMENDACIONES ══
+function loadRecs(){
+  var upMapObj=upMap();
+  document.getElementById('recomendaciones-list').innerHTML=SIM_RECS.map(function(r){
+    var sol=SOLICITUDES.find(function(s){return s.solicitud_id===r.solicitud_id;})||{};
+    var up=upMapObj[sol.unidad_id]||{};
+    var bc=r.prioridad==='Urgente'?'#ff3333':r.prioridad==='Alta'?'#f87171':r.prioridad==='Media'?'#fbbf24':'#94a3b8';
+    return '<div class="card" style="margin-bottom:11px;border-left:3px solid '+bc+';">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
+      +'<div><div class="brand" style="font-size:14px;font-weight:800;color:#e2e8f0;">'+r.titulo+'</div>'
+      +'<div style="font-size:11px;color:#64748b;margin-top:2px;">'+r.tipo_fuente+' · '+r.solicitud_id+' · '+(up.codigo||'—')+'</div></div>'
+      +'<span class="badge" style="color:'+bc+';background:'+bc+'15;border:1px solid '+bc+'30;">'+r.prioridad+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">'+r.descripcion+'</div>'
+      +(r.producto_sugerido?'<div style="background:rgba(0,212,76,.07);border:1px solid rgba(0,212,76,.15);border-radius:7px;padding:8px 12px;font-size:11px;">'
+        +'<span style="color:#64748b;">Producto: </span><b>'+r.producto_sugerido+'</b>'
+        +(r.dosis?' <span style="color:#64748b;">· Dosis: </span><b>'+r.dosis+'</b>':'')
+        +(r.tiempo_respuesta_h!=null?' <span style="color:#64748b;">· Resp: </span><b>'+r.tiempo_respuesta_h+'h</b>':'')
+        +'</div>':'')
+      +'<div style="display:flex;gap:7px;margin-top:8px;">'
+      +(r.categoria==='Fertilización'?'<a href="https://www.agricola.iagri.pro" target="_blank" class="btn-outline" style="font-size:10px;padding:4px 10px;text-decoration:none;">🌿 → Marco (Nutrición)</a>':'')
+      +(r.categoria==='Bioseguridad'?'<button class="btn-hazmat" style="font-size:10px;padding:4px 10px;" onclick="activarHazmat(\''+r.solicitud_id+'\')">☣️ Activar Protocolo HAZMAT</button>':'')
+      +'<button class="btn-sm btn-primary" onclick="marcarAplicada('+r.recomendacion_id+')">✅ Marcar Aplicada</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+async function marcarAplicada(recId){
+  await dbQ(function(d){return d.from('lab_recomendaciones').update({aplicada:true,fecha_aplicacion:new Date().toISOString().split('T')[0]}).eq('recomendacion_id',recId);});
+  var r=SIM_RECS.find(function(x){return x.recomendacion_id===recId;});if(r)r.aplicada=true;
+  showToast('✅ Recomendación marcada como aplicada');loadRecs();
+}
+function activarHazmat(solId){showToast('☣️ Protocolo HAZMAT activado — Notificando Santiago + Yanilka + Propietario','#ff3333');}
+
+// ══ ALERTAS ══
+function loadAlertas(){
+  var upMapObj=upMap();
+  var hazmatList=SOLICITUDES.filter(function(s){return s.bloquea_lote||s.bloquea_cosecha||s.resultado_general==='Crítico';});
+  var html='';
+  if(hazmatList.length){
+    html+='<div style="background:rgba(255,51,51,.1);border:2px solid rgba(255,51,51,.35);border-radius:12px;padding:16px;margin-bottom:16px;">'
+      +'<div style="font-size:14px;font-weight:800;color:#ff3333;margin-bottom:12px;">☣️ ALERTAS HAZMAT ACTIVAS — '+hazmatList.length+'</div>'
+      +hazmatList.map(function(s){
+        var up=upMapObj[s.unidad_id]||{};
+        return '<div style="background:rgba(255,51,51,.07);border:1px solid rgba(255,51,51,.2);border-radius:8px;padding:12px;margin-bottom:8px;">'
+          +'<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
+          +'<div><div class="brand" style="font-size:13px;font-weight:800;color:#ff3333;">'+s.numero_muestra+' — '+(up.codigo||'—')+'</div>'
+          +'<div style="font-size:11px;color:rgba(255,51,51,.8);margin-top:3px;">'+s.tipo_analisis+' · '+s.muestra_tipo+' · '+s.fecha_toma_muestra+'</div></div>'
+          +'<div>'+(s.bloquea_lote?'<span class="badge badge-hazmat" style="margin-right:5px;">🔒 Lote Bloqueado</span>':'')
+          +(s.bloquea_cosecha?'<span class="badge badge-hazmat">🚫 Cosecha Bloqueada</span>':'')+'</div>'
+          +'</div>'
+          +'<div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;">'
+          +'<button class="btn-hazmat" style="font-size:11px;padding:5px 12px;" onclick="showToast(\'☣️ Protocolo HAZMAT activado — Desinfección iniciada\',\'#ff3333\')">☣️ Activar Desinfección</button>'
+          +'<a href="https://www.agricola.iagri.pro" target="_blank" class="btn-outline" style="font-size:11px;padding:5px 12px;text-decoration:none;">🌿 Ver en Agrícola</a>'
+          +'<a href="https://www.agroindustria.iagri.pro" target="_blank" class="btn-outline" style="font-size:11px;padding:5px 12px;text-decoration:none;">🏭 Agroindustria</a>'
+          +'</div></div>';
+      }).join('')
+      +'</div>';
+  }
+
+  // Other alerts (calibration, PHI, etc.)
+  var calAlert=EQUIPOS.filter(function(e){return e.estado==='Calibración';});
+  if(calAlert.length){
+    html+='<div class="card" style="border-left:3px solid #fbbf24;margin-bottom:11px;">'
+      +'<div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:8px;">🛠️ Equipos Requieren Calibración ('+calAlert.length+')</div>'
+      +calAlert.map(function(e){return '<div style="font-size:11px;color:#94a3b8;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">'+e.nombre+' — Próx: '+(e.proximo_calibrado||'—')+'</div>';}).join('')
+      +'<button class="btn-outline" style="margin-top:8px;font-size:11px;padding:5px 12px;" onclick="go(\'equipos\')">Ver Equipos</button>'
+      +'</div>';
+  }
+
+  if(!hazmatList.length&&!calAlert.length){
+    html='<div class="card" style="text-align:center;padding:30px;"><div style="font-size:48px;margin-bottom:12px;">✅</div><div style="color:#4ade80;font-size:16px;font-weight:700;">Sistema en estado seguro — Zero Risk</div><div style="color:#64748b;margin-top:6px;font-size:12px;">Sin alertas HAZMAT activas · Todos los equipos operativos</div></div>';
+  }
+  document.getElementById('alertas-content').innerHTML=html;
+}
+
+// ══ EQUIPOS ══
+function loadEquipos(){
+  document.getElementById('equipos-grid').innerHTML=EQUIPOS.map(function(e){
+    var c=e.estado==='Operativo'?'#4ade80':e.estado==='Calibración'?'#fbbf24':'#f87171';
+    var bc=e.estado==='Operativo'?'rgba(34,197,94,.2)':e.estado==='Calibración'?'rgba(245,158,11,.2)':'rgba(239,68,68,.2)';
+    var ICONS={pH_metro:'🧪',Conductímetro:'⚡',Espectrómetro:'🔭',Microscopio:'🔬',PCR:'🧬',Gaussímetro:'🧲','SPAD-metro':'🌿',Incubadora:'🌡️',Autoclave:'♨️',Balanza:'⚖️'};
+    var icon=ICONS[e.tipo]||'⚙️';
+    var diasCal=e.proximo_calibrado?Math.ceil((new Date(e.proximo_calibrado)-new Date())/86400000):null;
+    return '<div class="card" style="border-left:3px solid '+c+';">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">'
+      +'<div><span style="font-size:24px;">'+icon+'</span></div>'
+      +'<span class="badge" style="color:'+c+';background:'+bc+';border:1px solid '+c+'40;font-size:9px;">'+e.estado+'</span>'
+      +'</div>'
+      +'<div class="brand" style="font-size:12px;font-weight:800;color:#e2e8f0;margin-bottom:3px;">'+e.nombre+'</div>'
+      +'<div style="font-size:10px;color:#64748b;margin-bottom:8px;">'+(e.marca||'')+(e.modelo?' · '+e.modelo:'')+'</div>'
+      +'<div style="font-size:10px;color:#94a3b8;margin-bottom:5px;"><span style="color:#64748b;">Mide:</span> '+( (e.parametros_medidos||[]).join(', '))+' · <span style="color:#64748b;">Prec:</span> '+(e.precision_declarada||'—')+'</div>'
+      +(e.proximo_calibrado?'<div style="font-size:10px;'+(diasCal<30?'color:#fbbf24;font-weight:700;':'color:#64748b;')+'">📅 Próx. calibración: '+e.proximo_calibrado+(diasCal!=null?' ('+diasCal+' días)':'')+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+async function saveEquipo(){
+  var nombre=_v('eq-nombre');if(!nombre){showToast('⚠ Nombre requerido','#ef4444');return;}
+  var data=_clean({equipo_id:'EQ-NEW-'+Date.now(),nombre:nombre,tipo:_v('eq-tipo'),marca:_v('eq-marca')||null,modelo:_v('eq-modelo')||null,numero_serie:_v('eq-serie')||null,ultimo_calibrado:_v('eq-cal')||null,proximo_calibrado:_v('eq-cal-next')||null,estado:_v('eq-estado'),tenant_id:'hidroexpo'});
+  var r=await dbQ(function(d){return d.from('lab_equipos').insert(data);});
+  SIM_EQUIPOS.push(data);EQUIPOS=SIM_EQUIPOS;
+  showToast(r.error?'✅ Equipo registrado (local)':'✅ Equipo registrado');
+  document.getElementById('modal-equipo').style.display='none';loadEquipos();
+}
+
+// ══ PANELES ══
+function loadPaneles(){
+  var TYPE_ICON={Fisicoquimico:'💧',NutricionSoluciones:'🧪',Microbiologico:'🦠',Fitopatogenos:'🦟',SaludVegetal:'🌿',Ambiental:'🌬️',Energia:'⚡',Sustrato:'🌱'};
+  var TYPE_COLOR={Fisicoquimico:'#60a5fa',NutricionSoluciones:'#4ade80',Microbiologico:'#f87171',Fitopatogenos:'#ff3333',SaludVegetal:'#00d44c',Ambiental:'#c084fc',Energia:'#fbbf24',Sustrato:'#fb923c'};
+  document.getElementById('paneles-grid').innerHTML=PANELES.map(function(p){
+    var icon=TYPE_ICON[p.tipo_analisis]||'🔬';var col=TYPE_COLOR[p.tipo_analisis]||'#94a3b8';
+    var params=getSimParams(p.panel_id);
+    return '<div class="card" style="border-left:3px solid '+col+'60;">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">'
+      +'<span style="font-size:26px;">'+icon+'</span>'
+      +'<div style="text-align:right;"><div style="font-size:10px;font-weight:700;color:'+col+';">$'+p.costo_base+'</div><div style="font-size:9px;color:#64748b;">'+p.tiempo_analisis_h+'h TAT</div></div>'
+      +'</div>'
+      +'<div class="brand" style="font-size:13px;font-weight:800;color:#e2e8f0;margin-bottom:3px;">'+p.nombre+'</div>'
+      +'<div style="font-size:10px;color:#64748b;margin-bottom:8px;">'+(p.descripcion||'').substring(0,70)+'</div>'
+      +'<div style="font-size:10px;color:#94a3b8;margin-bottom:8px;"><span style="color:#64748b;">Muestra:</span> '+p.muestra_tipo+' · <span style="color:#64748b;">'+params.length+' parámetros</span></div>'
+      +(params.length?'<div style="display:flex;flex-wrap:wrap;gap:3px;">'
+        +params.map(function(par){return '<span style="font-size:9px;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,.05);color:#94a3b8;">'+par.nombre_tecnico+'</span>';}).join('')+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+// ══ INTEGRACIÓN ══
+function loadIntegra(){
+  var upMapObj=upMap();
+  var hazmatList=SOLICITUDES.filter(function(s){return s.bloquea_lote;});
+  var liberados=SOLICITUDES.filter(function(s){return s.estado==='Validada'&&!s.bloquea_lote;});
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">'
+    // Agrícola
+    +'<div class="card" style="border-top:3px solid var(--green);">'
+    +'<div style="font-size:13px;font-weight:800;color:#4ade80;margin-bottom:10px;">🌿 ia2grícola — Módulo Agrícola</div>'
+    +'<div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">El laboratorio actualiza el cuaderno de campo y genera NC automáticamente cuando detecta contaminantes.</div>'
+    +'<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,212,76,.07);border-radius:6px;font-size:11px;"><span>✅</span><span style="color:#94a3b8;">NC generadas automáticamente por HAZMAT:</span><b style="color:#f87171;">'+hazmatList.length+'</b></div>'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,212,76,.07);border-radius:6px;font-size:11px;"><span>🌿</span><span style="color:#94a3b8;">Cuadernos notificados:</span><b style="color:#4ade80;">'+SOLICITUDES.filter(function(s){return s.notificado_agricola;}).length+'</b></div>'
+    +'</div>'
+    +'<a href="https://www.agricola.iagri.pro" target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;font-size:11px;padding:7px;">→ Abrir ia2grícola</a>'
+    +'</div>'
+    // Agroindustria
+    +'<div class="card" style="border-top:3px solid var(--blue);">'
+    +'<div style="font-size:13px;font-weight:800;color:#60a5fa;margin-bottom:10px;">🏭 Agroindustria — Módulo Sara</div>'
+    +'<div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">El certificado de inocuidad CAIA es la "llave" para que Sara abra las puertas de recepción en planta. Sin certificado = sin ingreso.</div>'
+    +'<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(59,130,246,.07);border-radius:6px;font-size:11px;"><span>✅</span><span style="color:#94a3b8;">Lotes liberados para planta:</span><b style="color:#4ade80;">'+liberados.length+'</b></div>'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,51,51,.07);border-radius:6px;font-size:11px;"><span>🚫</span><span style="color:#94a3b8;">Lotes bloqueados:</span><b style="color:#f87171;">'+hazmatList.length+'</b></div>'
+    +'</div>'
+    +'<a href="https://www.agroindustria.iagri.pro" target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;font-size:11px;padding:7px;">→ Abrir Agroindustria</a>'
+    +'</div>'
+    +'</div>'
+    // Flujo completo
+    +'<div class="card">'
+    +'<div style="font-size:12px;font-weight:700;color:#00d44c;margin-bottom:12px;">🔄 Flujo de Integración Automático</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;align-items:center;">'
+    +'<div style="background:rgba(0,212,76,.07);border:1px solid rgba(0,212,76,.15);border-radius:8px;padding:10px;"><div style="font-size:20px;">🌿</div><div style="font-size:10px;color:#4ade80;font-weight:700;margin-top:4px;">Campo<br>Muestreo</div></div>'
+    +'<div style="color:#64748b;font-size:18px;">→</div>'
+    +'<div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15);border-radius:8px;padding:10px;"><div style="font-size:20px;">🔬</div><div style="font-size:10px;color:#60a5fa;font-weight:700;margin-top:4px;">CAIA Lab<br>Análisis</div></div>'
+    +'<div style="color:#64748b;font-size:18px;">→</div>'
+    +'<div style="background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.15);border-radius:8px;padding:10px;"><div style="font-size:20px;">📋</div><div style="font-size:10px;color:#c084fc;font-weight:700;margin-top:4px;">Resultado<br>+ Firma</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin-top:8px;">'
+    +'<div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:10px;"><div style="font-size:18px;">🌾</div><div style="font-size:9px;color:#fbbf24;font-weight:700;margin-top:3px;">Agrícola<br>NC / Cuaderno</div></div>'
+    +'<div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15);border-radius:8px;padding:10px;"><div style="font-size:18px;">🏭</div><div style="font-size:9px;color:#60a5fa;font-weight:700;margin-top:3px;">Agroindustria<br>Certificado</div></div>'
+    +'<div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:8px;padding:10px;"><div style="font-size:18px;">💼</div><div style="font-size:9px;color:#4ade80;font-weight:700;margin-top:3px;">Propietario<br>Dividendos</div></div>'
+    +'<div style="background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.15);border-radius:8px;padding:10px;"><div style="font-size:18px;">🛒</div><div style="font-size:9px;color:#c084fc;font-weight:700;margin-top:3px;">Comercial<br>QR Málaga</div></div>'
+    +'</div></div>';
+  document.getElementById('integra-content').innerHTML=html;
+}
+
+// ══ HELPERS ══
+function estadoBadge(s){var m={Recibida:'badge-blue',En_Análisis:'badge-warn',Completada:'badge-purple',Validada:'badge-ok',Rechazada:'badge-crit',Entregada:'badge-gray'};return '<span class="badge '+(m[s]||'badge-gray')+'" style="font-size:9px;">'+(s||'—')+'</span>';}
+var _toast;
+function showToast(msg,color){var el=document.getElementById('toast-msg');el.textContent=msg;el.style.borderColor=color?color+'80':'rgba(0,212,76,.25)';el.style.background=color?'rgba(0,0,0,.85)':'#0b1929';el.style.opacity='1';el.style.transform='translateX(-50%) translateY(0)';clearTimeout(_toast);_toast=setTimeout(function(){el.style.opacity='0';el.style.transform='translateX(-50%) translateY(20px)';},3200);}
+
+// ══ HAZMAT BANNER DISMISS ══
+document.getElementById('hazmat-confirm-btn').addEventListener('click', function() {
+  document.getElementById('hazmat-banner').style.display='none';
+});
+
+// ══ MOTOR DE NOTIFICACIONES CROSS-MÓDULO ══
+async function notificarModulos(sol, tipo) {
+  // tipo: 'hazmat' | 'aprobado' | 'resultado'
+  var up = (upMap()[sol.unidad_id]||{codigo: sol.unidad_id});
+  var ts = new Date().toISOString();
+  var notifs = [];
+
+  if (tipo === 'hazmat') {
+    // 1. NC crítica en Agrícola
+    notifs.push(dbQ(function(d){ return d.from('agric_no_conformidades').upsert({
+      up_id: sol.unidad_id,
+      tipo: 'analitica',
+      severidad: 'critica',
+      origen: 'laboratorio',
+      titulo: '☣️ HAZMAT CAIA Lab — '+sol.numero_muestra+' — '+up.codigo,
+      descripcion: 'PATÓGENO DETECTADO en análisis '+sol.tipo_analisis+' ('+sol.muestra_tipo+'). Cultivo: '+(sol.cultivo_referencia||'—')+'. Muestra tomada: '+sol.fecha_toma_muestra+'. LOTE BLOQUEADO automáticamente por CAIA Lab.',
+      agente_detector: 'CAIA Lab · '+(me&&me.nombre||'Sistema'),
+      accion_inmediata: 'Cuarentena inmediata. Suspender cosecha, transporte y procesado. Activar protocolo desinfección.',
+      estado: 'abierta',
+      bloquea_lote: true,
+      bloquea_despacho: true,
+      cert_lab_id: sol.solicitud_id,
+      tenant_id: 'hidroexpo',
+      created_at: ts
+    }, {onConflict: 'up_id,cert_lab_id'}); }));
+
+    // 2. Bloqueo en agroindustria_ingresos (si existe)
+    notifs.push(dbQ(function(d){ return d.from('agro_bloqueos_sanitarios').upsert({
+      id: sol.solicitud_id+'-BLQ',
+      up_id: sol.unidad_id,
+      motivo: 'HAZMAT — '+sol.tipo_analisis,
+      lab_solicitud_id: sol.solicitud_id,
+      bloqueado: true,
+      bloqueado_por: 'CAIA Lab · '+(me&&me.nombre||'Sistema'),
+      fecha_bloqueo: ts,
+      tenant_id: 'hidroexpo'
+    }, {onConflict: 'id'}); }));
+
+    // 3. Marcar solicitud como notificada
+    notifs.push(dbQ(function(d){ return d.from('lab_solicitudes').update({
+      notificado_agricola: true,
+      notificado_agroindustria: true,
+      notificado_propietario: true,
+      updated_at: ts
+    }).eq('solicitud_id', sol.solicitud_id); }));
+
+    await Promise.allSettled(notifs);
+    // Actualizar estado local
+    var s = SOLICITUDES.find(function(x){return x.solicitud_id===sol.solicitud_id;});
+    if(s){s.notificado_agricola=true;s.notificado_agroindustria=true;s.notificado_propietario=true;}
+
+    showToast('☣️ HAZMAT notificado → 🌿 Agrícola NC · 🏭 Agroindustria Bloqueado · 💼 Propietario','#ff3333');
+
+  } else if (tipo === 'aprobado') {
+    // Reporte validado — liberar lote y notificar
+    // 1. Certificado en tabla compartida
+    notifs.push(dbQ(function(d){ return d.from('lab_certificados_inocuidad').upsert({
+      cert_id: sol.solicitud_id,
+      up_id: sol.unidad_id,
+      cultivo: sol.cultivo_referencia||'—',
+      panel_id: sol.panel_id,
+      indice_salud: sol.indice_salud,
+      resultado: sol.resultado_general,
+      fecha_emision: ts,
+      firmado_analista: true,
+      firmado_supervisor: true,
+      valido: true,
+      liberado_para_cosecha: !sol.bloquea_cosecha,
+      liberado_para_despacho: !sol.bloquea_despacho,
+      liberado_para_planta: !sol.bloquea_lote,
+      emitido_por: me&&me.nombre||'CAIA Lab',
+      tenant_id: 'hidroexpo'
+    }, {onConflict: 'cert_id'}); }));
+
+    // 2. Notificar agricola - Cuaderno
+    notifs.push(dbQ(function(d){ return d.from('lab_solicitudes').update({
+      notificado_agricola: true,
+      notificado_agroindustria: !sol.bloquea_lote,
+      notificado_propietario: true,
+      updated_at: ts
+    }).eq('solicitud_id', sol.solicitud_id); }));
+
+    // 3. Si hay NC previa para este UP del lab, actualizar a observacion
+    if(!sol.bloquea_lote){
+      notifs.push(dbQ(function(d){ return d.from('agric_no_conformidades')
+        .update({estado:'en_proceso',notas_cierre:'Liberado por CAIA Lab cert '+sol.solicitud_id})
+        .eq('up_id', sol.unidad_id).eq('origen','laboratorio').eq('estado','abierta'); }));
+    }
+
+    await Promise.allSettled(notifs);
+    var s=SOLICITUDES.find(function(x){return x.solicitud_id===sol.solicitud_id;});
+    if(s){s.notificado_agricola=true;s.notificado_propietario=true;if(!sol.bloquea_lote)s.notificado_agroindustria=true;}
+    showToast('✅ Certificado distribuido → 🌿 Agrícola · '+(sol.bloquea_lote?'🚫':'🏭')+' Agroindustria · 💼 Propietario');
+  }
+}
+
+// ══ PANEL MANDO CENTRAL — actualización ══
+async function pushToWarRoom(sol, tipo) {
+  // Escribe en tabla de eventos del War Room (mando central / AGROSENSe)
+  var payload = {
+    evento_id: 'LAB-EV-'+Date.now(),
+    origen_modulo: 'caia_lab',
+    tipo_evento: tipo==='hazmat'?'alerta_critica':'resultado_lab',
+    severidad: tipo==='hazmat'?'critica':'info',
+    up_id: sol.unidad_id,
+    titulo: tipo==='hazmat'
+      ? '☣️ HAZMAT '+sol.numero_muestra+' — '+(upMap()[sol.unidad_id]||{codigo:'?'}).codigo
+      : '✅ Lab Aprobado '+sol.numero_muestra+' — '+(sol.resultado_general||'—'),
+    descripcion: tipo==='hazmat'
+      ? 'Patógeno detectado en análisis '+sol.tipo_analisis+'. Lote bloqueado.'
+      : 'Análisis '+sol.panel_id+' validado. Índice: '+sol.indice_salud+'%. '+sol.resultado_general+'.',
+    datos_json: JSON.stringify({
+      solicitud_id: sol.solicitud_id,
+      panel_id: sol.panel_id,
+      indice_salud: sol.indice_salud,
+      bloquea_lote: sol.bloquea_lote,
+      resultado_general: sol.resultado_general
+    }),
+    leido: false,
+    tenant_id: 'hidroexpo',
+    created_at: new Date().toISOString()
+  };
+  await dbQ(function(d){ return d.from('war_room_eventos').insert(payload); });
+}
+
+// ══ CREAR TABLA CERTIFICADOS SI NO EXISTE (via SQL) ══
+async function ensureCertTable() {
+  await dbQ(function(d){ return d.rpc('exec_sql', {sql:
+    `CREATE TABLE IF NOT EXISTS public.lab_certificados_inocuidad (
+      cert_id TEXT PRIMARY KEY,
+      up_id TEXT,
+      cultivo TEXT,
+      panel_id TEXT,
+      indice_salud NUMERIC,
+      resultado TEXT,
+      fecha_emision TIMESTAMPTZ,
+      firmado_analista BOOLEAN DEFAULT false,
+      firmado_supervisor BOOLEAN DEFAULT false,
+      valido BOOLEAN DEFAULT true,
+      liberado_para_cosecha BOOLEAN DEFAULT true,
+      liberado_para_despacho BOOLEAN DEFAULT true,
+      liberado_para_planta BOOLEAN DEFAULT true,
+      emitido_por TEXT,
+      tenant_id TEXT DEFAULT 'hidroexpo',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    ); CREATE TABLE IF NOT EXISTS public.war_room_eventos (
+      evento_id TEXT PRIMARY KEY,
+      origen_modulo TEXT,
+      tipo_evento TEXT,
+      severidad TEXT,
+      up_id TEXT,
+      titulo TEXT,
+      descripcion TEXT,
+      datos_json TEXT,
+      leido BOOLEAN DEFAULT false,
+      tenant_id TEXT DEFAULT 'hidroexpo',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`
+  }); });
+}
+</script>
+</body>
+</html>
